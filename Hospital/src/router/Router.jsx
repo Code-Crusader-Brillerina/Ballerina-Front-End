@@ -14,6 +14,7 @@ import PharmacyDashboard from "../pages/Pharmacy/PharmacyDashboard";
 // Patient Pages
 import Home from "../pages/Patient/Home";
 import Doctor from "../pages/Patient/Doctor";
+import Dashboard from "../pages/Patient/Dashboard";
 
 
 
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
       {
         path: "", element:
           <Home />
+      },
+      {
+        path: "dashboard", element:
+          <Dashboard />
       },
       {
         path: "doctorpage", element:

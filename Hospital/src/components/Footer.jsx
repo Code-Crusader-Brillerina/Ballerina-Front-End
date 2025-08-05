@@ -1,16 +1,20 @@
 import React from 'react';
 
 const Footer = () => (
-  <footer className="bg-blue-900 text-white mt-8 py-8">
+  <footer className="bg-blue-900 text-white mt-8 py-8 relative rounded-t-3xl overflow-hidden">
+    {/* Optional: A dark blue background curve to match the image if needed */}
+    <div className="absolute top-0 left-0 w-full h-8 bg-blue-900 transform -translate-y-full rounded-t-3xl"></div>
+    
     <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
+      {/* Footer Branding Section */}
       <div>
         <div className="flex items-center mb-4">
-          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11c0 3.866-3.582 7-8 7-4.418 0-8-3.134-8-7s3.582-7 8-7 8 3.134 8 7zM12 11v6m0-6V5"></path></svg>
-          </div>
+          <img src="/Logo.png" alt="Halgouce Logo" className="h-10 w-10" />
           <span className="ml-2 font-bold text-lg">Hallguce</span>
         </div>
       </div>
+      
+      {/* Footer Link Sections */}
       <div>
         <h4 className="font-semibold mb-2">Records</h4>
         <ul className="space-y-1 text-sm text-gray-300">
