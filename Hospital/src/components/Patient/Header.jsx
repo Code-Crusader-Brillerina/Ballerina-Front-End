@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaRegBell, FaRegUserCircle } from 'react-icons/fa';
+import { NavLink } from 'react-router-dom';
 
 const Header = () => (
   <header className="bg-transparent">
@@ -12,10 +13,38 @@ const Header = () => (
 
       {/* Center: Navigation Tabs */}
       <nav className="hidden md:flex space-x-6 absolute left-1/2 transform -translate-x-1/2">
-        <a href="#" className="text-gray-600 hover:text-blue-600 font-semibold transition-colors">Dashboard</a>
-        <a href="#" className="text-blue-600 font-semibold border-b-2 border-blue-600">Doctor</a>
-        <a href="#" className="text-gray-600 hover:text-blue-600 font-semibold transition-colors">Pharmacy</a>
-        <a href="#" className="text-gray-600 hover:text-blue-600 font-semibold transition-colors">About us</a>
+        <NavLink 
+          to="/dashboard" 
+          className={({ isActive }) => 
+            `font-semibold transition-colors ${isActive ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-600 hover:text-blue-600"}`
+          }
+        >
+          Dashboard
+        </NavLink>
+        <NavLink 
+          to="/doctorpage" 
+          className={({ isActive }) => 
+            `font-semibold transition-colors ${isActive ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-600 hover:text-blue-600"}`
+          }
+        >
+          Doctor
+        </NavLink>
+        <NavLink 
+          to="/pharmacypage" 
+          className={({ isActive }) => 
+            `font-semibold transition-colors ${isActive ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-600 hover:text-blue-600"}`
+          }
+        >
+          Pharmacy
+        </NavLink>
+        <NavLink 
+          to="/about-us" 
+          className={({ isActive }) => 
+            `font-semibold transition-colors ${isActive ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-600 hover:text-blue-600"}`
+          }
+        >
+          About us
+        </NavLink>
       </nav>
       
       {/* Right side: Icons */}
