@@ -15,6 +15,7 @@ import PharmacyDashboard from "../pages/Pharmacy/PharmacyDashboard";
 import Home from "../pages/Patient/Home";
 import Doctor from "../pages/Patient/Doctor";
 import Dashboard from "../pages/Patient/Dashboard";
+import Pharmacy from "../pages/Patient/Pharmacy";
 
 
 
@@ -38,6 +39,10 @@ const router = createBrowserRouter([
       {
         path: "doctorpage", element:
           <Doctor />
+      },
+      {
+        path: "pharmacypage", element:
+          <Pharmacy />
       },
     ],
   },
