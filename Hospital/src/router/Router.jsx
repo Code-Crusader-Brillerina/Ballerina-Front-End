@@ -16,6 +16,7 @@ import Home from "../pages/Patient/Home";
 import Doctor from "../pages/Patient/Doctor";
 import Dashboard from "../pages/Patient/Dashboard";
 import Pharmacy from "../pages/Patient/Pharmacy";
+import AboutUs from "../pages/Patient/AboutUs";
 
 
 
@@ -43,6 +44,10 @@ const router = createBrowserRouter([
       {
         path: "pharmacypage", element:
           <Pharmacy />
+      },
+      {
+        path: "about-us", element:
+          <AboutUs />
       },
     ],
   },
