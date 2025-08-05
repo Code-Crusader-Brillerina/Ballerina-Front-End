@@ -1,7 +1,7 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
 
-const Doctor = () => {
+const PharmacyLayout = () => {
   return (
     <div>
       <main >
@@ -11,4 +11,4 @@ const Doctor = () => {
   )
 }
 
-export default Doctor;
+export default PharmacyLayout;

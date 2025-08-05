@@ -2,14 +2,18 @@ import { createBrowserRouter } from "react-router-dom";
 
 // Layouts
 import Main from "../layout/Main";
-import Admin from "../layout/Admin";
-import Home from "../pages/Patient/Home";
-import Doctor from "../layout/Doctor";
-import Pharmacy from "../layout/Pharmacy";
+import AdminLayout from "../layout/AdminLayout";
+import DoctorLayout from "../layout/DoctorLayout";
+import PharmacyLayout from "../layout/PharmacyLayout";
+
+
 import AdminDashboard from "../pages/Admin/AdminDashboard";
 import DoctorDashboard from "../pages/Doctor/DoctorDashboard";
 import PharmacyDashboard from "../pages/Pharmacy/PharmacyDashboard";
 
+// Patient Pages
+import Home from "../pages/Patient/Home";
+import Doctor from "../pages/Patient/Doctor";
 
 
 
@@ -26,6 +30,10 @@ const router = createBrowserRouter([
         path: "", element:
           <Home />
       },
+      {
+        path: "doctorpage", element:
+          <Doctor />
+      },
     ],
   },
 
@@ -35,7 +43,7 @@ const router = createBrowserRouter([
   {
     path: "/admin",
     element: (
-      <Admin />
+      <AdminLayout />
     ),
     children: [
       // Add admin routes here
@@ -53,7 +61,7 @@ const router = createBrowserRouter([
   {
     path: "/doctor",
     element: (
-      <Doctor />
+      <DoctorLayout />
     ),
     children: [
       {
@@ -71,7 +79,7 @@ const router = createBrowserRouter([
   {
     path: "/pharmacy",
     element: (
-      <Pharmacy />
+      <PharmacyLayout />
     ),
     children: [
       {
