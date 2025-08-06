@@ -1,7 +1,7 @@
 import React from 'react';
 import SearchFilter from '../../components/Patient/SearchFilter';
-import DoctorCard from '../../components/Patient/DoctorCard';
 import Pagination from '../../components/Patient/Pagination';
+import DoctorCard from '../../components/Patient/doctorPage/DoctorCard';
 
 const doctorsData = new Array(12).fill({
   name: 'Maya Fornado',

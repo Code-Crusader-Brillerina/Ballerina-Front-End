@@ -1,6 +1,7 @@
 import React from 'react';
-import AppointmentsSection from '../../components/Patient/AppointmentsSection';
-import PrescriptionsSection from '../../components/Patient/PrescriptionsSection';
+import AppointmentsSection from '../../components/Patient/dashboardPage/AppointmentsSection';
+import PrescriptionsSection from '../../components/Patient/dashboardPage/PrescriptionsSection';
+
 
 
 const Dashboard = () => {

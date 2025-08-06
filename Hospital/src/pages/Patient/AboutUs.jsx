@@ -1,7 +1,8 @@
 import React from 'react';
-import AboutSection from '../../components/Patient/AboutSection';
-import MissionSection from '../../components/Patient/MissionSection';
-import TeamSection from '../../components/Patient/TeamSection';
+import AboutSection from '../../components/Patient/aboutusPage/AboutSection';
+import MissionSection from '../../components/Patient/aboutusPage/MissionSection';
+import TeamSection from '../../components/Patient/aboutusPage/TeamSection';
+
 
 
 const AboutUs = () => {

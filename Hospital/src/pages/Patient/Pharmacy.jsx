@@ -1,7 +1,8 @@
 import React from 'react';
 import SearchFilter from '../../components/Patient/SearchFilter';
-import PharmacyCard from '../../components/Patient/PharmacyCard';
+import PharmacyCard from '../../components/Patient/pharmacyPage/PharmacyCard';
 import Pagination from '../../components/Patient/Pagination';
+
 
 const pharmaciesData = new Array(9).fill({
   name: 'The New Pharmacy',
