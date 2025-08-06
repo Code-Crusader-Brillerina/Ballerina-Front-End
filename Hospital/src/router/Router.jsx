@@ -17,6 +17,7 @@ import Doctor from "../pages/Patient/Doctor";
 import Dashboard from "../pages/Patient/Dashboard";
 import Pharmacy from "../pages/Patient/Pharmacy";
 import AboutUs from "../pages/Patient/AboutUs";
+import Appointment from "../pages/Patient/Appointment";
 
 
 
@@ -49,6 +50,11 @@ const router = createBrowserRouter([
         path: "about-us", element:
           <AboutUs />
       },
+      {
+        path: "doctorpage/:doctorName/appointment",
+        element: <Appointment />,
+      },
+
     ],
   },
 
