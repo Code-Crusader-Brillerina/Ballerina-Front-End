@@ -22,6 +22,7 @@ import AppointmentPaymentPage from "../pages/Patient/AppointmentPaymentPage";
 import VideoConference from "../pages/Patient/VideoConference";
 import PrescriptionPage from "../pages/Patient/PrescriptionPage";
 import PharmacyDelivery from "../pages/Patient/PharmacyDelivery";
+import PrescriptionPayment from "../pages/Patient/PrescriptionPayment";
 
 
 
@@ -74,6 +75,10 @@ const router = createBrowserRouter([
       {
         path: "pharmacy/:pharmacyName/delivery",
         element: <PharmacyDelivery />,
+      },
+      {
+        path: "prescription/payment",
+        element: <PrescriptionPayment />,
       },
 
     ],

@@ -1,11 +1,13 @@
+// PharmacyDelivery.jsx
+
 import React from 'react';
-import { useParams } from 'react-router-dom';
-import { FaLeaf } from 'react-icons/fa'; // Assuming you use react-icons
+import { useParams, useNavigate } from 'react-router-dom';
+import { FaLeaf } from 'react-icons/fa';
 
 const PharmacyDelivery = () => {
   const { pharmacyName } = useParams();
+  const navigate = useNavigate();
 
-  // Mock data for the selected pharmacy, in a real app you'd fetch this.
   const pharmacyDetails = {
     name: pharmacyName,
     address: 'Wariyapola, Kurunegala',
@@ -14,12 +16,16 @@ const PharmacyDelivery = () => {
     fee: 'Rs 560.00',
   };
 
+  const handlePaymentClick = () => {
+    navigate('/prescription/payment');
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Delivery</h1>
+      {/* Change this heading to be more specific */}
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">Delivery Details</h1>
       
       <div className="bg-white rounded-lg shadow-md p-6">
-        {/* Pharmacy Details Header */}
         <div className="flex justify-between items-start border-b border-gray-200 pb-4 mb-6">
           <div className="flex items-center space-x-4">
             <FaLeaf className="text-green-600 h-8 w-8" />
@@ -35,7 +41,6 @@ const PharmacyDelivery = () => {
           </div>
         </div>
 
-        {/* Delivery Form */}
         <form className="space-y-4 max-w-xl mx-auto">
           <div>
             <label htmlFor="fullName" className="sr-only">Full Name</label>
@@ -96,7 +101,11 @@ const PharmacyDelivery = () => {
             </div>
           </div>
           
-          <button className="w-full bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-800 transition-colors">
+          <button 
+            type="button"
+            onClick={handlePaymentClick}
+            className="w-full bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-800 transition-colors"
+          >
             Payment
           </button>
         </form>
