@@ -19,6 +19,7 @@ import Pharmacy from "../pages/Patient/Pharmacy";
 import AboutUs from "../pages/Patient/AboutUs";
 import Appointment from "../pages/Patient/Appointment";
 import AppointmentPaymentPage from "../pages/Patient/AppointmentPaymentPage";
+import VideoConference from "../pages/Patient/VideoConference";
 
 
 
@@ -58,6 +59,10 @@ const router = createBrowserRouter([
       {
         path: "appointment/payment",
         element: <AppointmentPaymentPage />,
+      },
+      {
+        path: "video-conference/:doctorName",
+        element: <VideoConference />,
       },
 
     ],
