@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom'; // Import Link
 
 const PharmacyCard = ({ name, address, deliveryTime, price }) => (
   <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
@@ -22,9 +23,12 @@ const PharmacyCard = ({ name, address, deliveryTime, price }) => (
     <p className="text-sm text-gray-600">{address}</p>
     <p className="text-sm text-gray-600">Delivery Time - {deliveryTime}</p>
     <p className="text-sm font-bold text-gray-800 mt-2">{price}</p>
-    <button className="w-full bg-blue-600 text-white text-sm mt-4 px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-      Select & Pay
-    </button>
+    
+    <Link to={`/pharmacy/${name}/delivery`} className="w-full">
+      <button className="w-full bg-blue-600 text-white text-sm mt-4 px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+        Select & Pay
+      </button>
+    </Link>
   </div>
 );
 
