@@ -11,6 +11,7 @@ import AdminDashboard from "../pages/Admin/AdminDashboard";
 import DoctorDashboard from "../pages/Doctor/DoctorDashboard";
 import PharmacyDashboard from "../pages/Pharmacy/PharmacyDashboard";
 
+
 // Patient Pages
 import Home from "../pages/Patient/Home";
 import Doctor from "../pages/Patient/Doctor";
