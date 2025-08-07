@@ -20,6 +20,7 @@ import AboutUs from "../pages/Patient/AboutUs";
 import Appointment from "../pages/Patient/Appointment";
 import AppointmentPaymentPage from "../pages/Patient/AppointmentPaymentPage";
 import VideoConference from "../pages/Patient/VideoConference";
+import PrescriptionPage from "../pages/Patient/PrescriptionPage";
 
 
 
@@ -63,6 +64,10 @@ const router = createBrowserRouter([
       {
         path: "video-conference/:doctorName",
         element: <VideoConference />,
+      },
+      {
+        path: "prescription/:id", 
+        element: <PrescriptionPage />,
       },
 
     ],
