@@ -1,16 +1,12 @@
-// AppointmentPage.jsx
-
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
-// Placeholder data for a specific doctor.
-// In a real application, you would fetch this data from an API based on the doctor's name.
 const getDoctorDetails = (name) => {
   return {
     name: name,
     specialty: 'Physiologist',
     education: 'MBBS Colombo University',
-    imageUrl: 'https://via.placeholder.com/200', // Use a larger image for the profile
+    imageUrl: 'https://via.placeholder.com/200',
     bio: 'Dr. Maya Fornado is a dedicated medical professional committed to delivering compassionate care and promoting patient well-being through expertise, integrity, and a passion for improving health outcomes in the community.',
   };
 };
@@ -18,6 +14,11 @@ const getDoctorDetails = (name) => {
 const Appointment = () => {
   const { doctorName } = useParams();
   const doctor = getDoctorDetails(doctorName);
+  const navigate = useNavigate();
+
+  const handlePaymentClick = () => {
+    navigate('/appointment/payment');
+  };
 
   return (
     <div className="container mx-auto p-4 md:p-8">
@@ -25,7 +26,6 @@ const Appointment = () => {
       
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-8">
-          {/* Doctor Info Section */}
           <div className="md:w-1/3">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Dr. {doctor.name}</h2>
             <div className="bg-gray-100 rounded-lg overflow-hidden mb-4">
@@ -36,9 +36,7 @@ const Appointment = () => {
             <p className="mt-4 text-sm text-gray-700">{doctor.bio}</p>
           </div>
           
-          {/* Appointment Booking Section */}
           <div className="md:w-2/3">
-            {/* Online/In-person Toggle */}
             <div className="flex space-x-4 mb-4">
               <label className="flex items-center space-x-2 text-gray-700">
                 <input type="radio" name="appointment-type" className="form-radio text-blue-600" defaultChecked />
@@ -50,10 +48,8 @@ const Appointment = () => {
               </label>
             </div>
 
-            {/* Available Date */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Available Date</h3>
-              {/* Calendar component would go here */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-bold text-center text-gray-800 mb-2">July 2025</h4>
                 <div className="grid grid-cols-7 gap-1 text-center text-sm">
@@ -69,7 +65,6 @@ const Appointment = () => {
               </div>
             </div>
 
-            {/* Available Times */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Available Times</h3>
               <div className="grid grid-cols-2 gap-4">
@@ -88,7 +83,6 @@ const Appointment = () => {
               </div>
             </div>
 
-            {/* Documents Section */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Documents</h3>
               <div className="grid grid-cols-4 gap-4">
@@ -102,8 +96,10 @@ const Appointment = () => {
               </div>
             </div>
 
-            {/* Payment Button */}
-            <button className="w-full bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-800 transition-colors">
+            <button
+              onClick={handlePaymentClick}
+              className="w-full bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-800 transition-colors"
+            >
               Payment
             </button>
           </div>
