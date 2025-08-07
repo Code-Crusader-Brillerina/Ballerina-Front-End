@@ -12,8 +12,10 @@ const Dashboard = () => {
       
       <AppointmentsSection />
 
+
       <CompletedAppointmentsSection />
       
+
       <PrescriptionsSection />
 
       
