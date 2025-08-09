@@ -25,6 +25,7 @@ import PrescriptionPage from "../pages/Patient/PrescriptionPage";
 import PharmacyDelivery from "../pages/Patient/PharmacyDelivery";
 import PrescriptionPayment from "../pages/Patient/PrescriptionPayment";
 import Login from "../pages/Login";
+import Signup from "../pages/Signup";
 
 
 
@@ -37,8 +38,13 @@ const router = createBrowserRouter([
     element: (
       <Login />
     ),
+  },
 
-
+  {
+    path: "/signup",
+    element: (
+      <Signup />
+    ),
   },
 
   
