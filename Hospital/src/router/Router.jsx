@@ -24,11 +24,22 @@ import VideoConference from "../pages/Patient/VideoConference";
 import PrescriptionPage from "../pages/Patient/PrescriptionPage";
 import PharmacyDelivery from "../pages/Patient/PharmacyDelivery";
 import PrescriptionPayment from "../pages/Patient/PrescriptionPayment";
+import Login from "../pages/Login";
 
 
 
 
 const router = createBrowserRouter([
+
+
+  {
+    path: "/login",
+    element: (
+      <Login />
+    ),
+
+
+  },
 
   
   {
