@@ -3,19 +3,19 @@ import { Link } from 'react-router-dom';
 
 const Home = () => {
   return (
-    <div className="bg-transparent"> {/* Make the top-level div transparent */}
+    <div className="bg-transparent min-h-screen">
       {/* Hero Section with Wavy background and Gradient overlay */}
-      <div className="relative pt-10 pb-40"> {/* Remove bg-white from here */}
-        <div className="absolute inset-0">
+      <div className="relative h-[80vh] flex flex-col justify-between">
+        <div className="absolute inset-0 z-0">
           <img
-            src="p2.png"
-            alt="Smiling family"
+            src="p2.png" // The path to your image
+            alt="Doctor speaking with a young patient"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-green-100 opacity-50"></div>
-          <div className="absolute bottom-0 left-0 w-full">
+          <div className="absolute bottom-0 left-0 w-full z-10">
             <svg
-              className="w-full"
+              className="w-full h-auto"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 1440 320"
             >
@@ -27,8 +27,10 @@ const Home = () => {
             </svg>
           </div>
         </div>
-        <div className="relative z-10 container mx-auto px-6 pt-12">
-          <div className="flex flex-col md:flex-row items-center md:items-start md:space-x-12">
+        
+        {/* Hero content */}
+        <div className="relative z-20 container mx-auto px-6 py-12 flex-grow flex items-center">
+          <div className="flex flex-col md:flex-row items-start md:space-x-12">
             <div className="md:w-1/3">
               <h1 className="text-4xl font-bold text-gray-800 leading-tight">
                 Patient <br />
