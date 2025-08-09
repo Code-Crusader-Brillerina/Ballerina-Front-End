@@ -8,7 +8,7 @@ const Home = () => {
       <div className="relative h-[80vh] flex flex-col justify-between">
         <div className="absolute inset-0 z-0">
           <img
-            src="p2.png" // The path to your image
+            src="p2.png" 
             alt="Doctor speaking with a young patient"
             className="w-full h-full object-cover"
           />
@@ -52,8 +52,7 @@ const Home = () => {
           </div>
         </div>
       </div>
-
-      {/* Features Section */}
+      
       <div className="bg-white py-12">
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold text-gray-800 mb-8">Patient Hamsgonce</h2>
