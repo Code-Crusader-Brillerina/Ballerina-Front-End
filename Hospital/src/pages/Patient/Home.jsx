@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 
 const Home = () => {
   return (
-    <div>
+    <div className="bg-transparent"> {/* Make the top-level div transparent */}
       {/* Hero Section with Wavy background and Gradient overlay */}
-      <div className="relative bg-white pt-10 pb-40">
+      <div className="relative pt-10 pb-40"> {/* Remove bg-white from here */}
         <div className="absolute inset-0">
           <img
-            src="http://googleusercontent.com/file_content/1"
+            src="p2.png"
             alt="Smiling family"
             className="w-full h-full object-cover"
           />
