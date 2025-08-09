@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { FaTimes } from 'react-icons/fa';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -36,8 +37,12 @@ const Login = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md relative">
+        <Link to="/" className="absolute top-4 right-4">
+          <FaTimes className="text-gray-400 hover:text-gray-600 transition-colors" />
+        </Link>
         <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
+        <p className="text-center text-gray-500 mb-6">Enter your credentials to access your account.</p>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
@@ -69,6 +74,11 @@ const Login = () => {
             Login
           </button>
         </form>
+        <div className="text-center mt-4">
+          <p className="text-sm text-gray-600">
+            Don't have an account? <Link to="/signup" className="text-blue-600 font-semibold hover:underline">Sign up</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

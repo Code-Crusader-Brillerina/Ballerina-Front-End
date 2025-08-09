@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { FaTimes } from 'react-icons/fa';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -29,18 +30,18 @@ const Signup = () => {
 
     const requestBody = {
       userData: {
-        uid: Date.now().toString(), // Simple mock for a unique ID
+        uid: Date.now().toString(),
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        role: 'patient', // Assuming only patients register here
+        role: 'patient',
         phoneNumber: formData.phoneNumber,
         city: formData.city,
         district: formData.district,
-        profilepic: 'http://', // Placeholder
+        profilepic: 'http://',
       },
       patientData: {
-        pid: Date.now().toString(), // Simple mock for a patient ID
+        pid: Date.now().toString(),
         DOB: formData.dob,
         gender: formData.gender,
       },
@@ -70,8 +71,12 @@ const Signup = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-lg relative">
+        <Link to="/" className="absolute top-4 right-4">
+          <FaTimes className="text-gray-400 hover:text-gray-600 transition-colors" />
+        </Link>
         <h2 className="text-2xl font-bold text-center mb-6">Signup</h2>
+        <p className="text-center text-gray-500 mb-6">Create your account to get started.</p>
         <form onSubmit={handleSignup} className="space-y-4">
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
@@ -183,6 +188,11 @@ const Signup = () => {
             Signup
           </button>
         </form>
+        <div className="text-center mt-4">
+          <p className="text-sm text-gray-600">
+            Already have an account? <Link to="/login" className="text-blue-600 font-semibold hover:underline">Login</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
