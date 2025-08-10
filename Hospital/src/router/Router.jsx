@@ -47,7 +47,7 @@ const router = createBrowserRouter([
     ),
   },
 
-  
+
   {
     path: "/",
     element: (
@@ -55,24 +55,24 @@ const router = createBrowserRouter([
     ),
     children: [
       {
-        path: "", element:
-          <Home />
+        index: true,
+        element: <Home />
       },
       {
-        path: "dashboard", element:
-          <Dashboard />
+        path: "dashboard",
+        element: <Dashboard />
       },
       {
-        path: "doctorpage", element:
-          <Doctor />
+        path: "doctorpage",
+        element: <Doctor />
       },
       {
-        path: "pharmacypage", element:
-          <Pharmacy />
+        path: "pharmacypage",
+        element: <Pharmacy />
       },
       {
-        path: "about-us", element:
-          <AboutUs />
+        path: "about-us",
+        element: <AboutUs />
       },
       {
         path: "doctorpage/:doctorName/appointment",
@@ -87,7 +87,7 @@ const router = createBrowserRouter([
         element: <VideoConference />,
       },
       {
-        path: "prescription/:id", 
+        path: "prescription/:id",
         element: <PrescriptionPage />,
       },
       {
