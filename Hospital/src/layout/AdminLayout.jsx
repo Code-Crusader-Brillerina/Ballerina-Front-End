@@ -2,37 +2,37 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Admin/Sidebar';
 import { FaRegBell, FaRegUserCircle } from 'react-icons/fa';
+import GradientBackground from '../components/GradientBackground';
 
 
 const AdminLayout = () => {
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [activeTab, setActiveTab] = useState();
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      
-      {/* Main Content Area */}
-      <div className="flex-grow">
-        {/* Header (Top Nav) */}
-        <header className="bg-white p-4 flex justify-between items-center shadow-md">
-          <div className="flex items-center space-x-2">
+    <GradientBackground> {/* Wrap the content with GradientBackground */}
+      <div className="flex min-h-screen"> {/* Remove bg-gray-100 from here */}
+        {/* Sidebar */}
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        
+        {/* Main Content Area */}
+        <div className="flex-grow">
+          {/* Header (Top Nav) */}
+          <header className="bg-transparent p-4 flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+            </div>
+            <div className="flex items-center space-x-4 ">
+              <FaRegBell className="text-gray-600 text-2xl cursor-pointer hover:text-blue-600 transition-colors" />
+              <FaRegUserCircle className="text-gray-600 text-2xl cursor-pointer hover:text-blue-600 transition-colors" />
+            </div>
+          </header>
 
-          </div>
-          <div className="flex items-center space-x-4">
-
-            <FaRegBell className="text-gray-600 text-2xl cursor-pointer hover:text-blue-600 transition-colors" />
-            <FaRegUserCircle className="text-gray-600 text-2xl cursor-pointer hover:text-blue-600 transition-colors" />
-
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <main className="p-8">
-          <Outlet />
-        </main>
+          {/* Page Content */}
+          <main className="p-8">
+            <Outlet />
+          </main>
+        </div>
       </div>
-    </div>
+    </GradientBackground>
   );
 };
 

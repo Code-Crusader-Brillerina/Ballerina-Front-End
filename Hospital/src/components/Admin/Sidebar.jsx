@@ -4,11 +4,12 @@ import {
   FaTachometerAlt, FaUsers, FaUserMd, FaPills, FaFlask, FaRegBell, FaCog, FaSignOutAlt
 } from 'react-icons/fa';
 
-const SidebarLink = ({ to, icon: Icon, text, subLinks }) => {
+const SidebarLink = ({ to, icon: Icon, text, subLinks, end }) => {
   return (
     <div>
       <NavLink
         to={to}
+        end={end} // <-- Add the `end` prop here
         className={({ isActive }) =>
           `flex items-center space-x-4 px-4 py-3 rounded-lg transition-colors
           ${isActive ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-blue-800'}`
@@ -49,7 +50,8 @@ const Sidebar = () => {
 
       {/* Navigation */}
       <nav className="space-y-4">
-        <SidebarLink to="/admin" icon={FaTachometerAlt} text="Dashboard" />
+        {/* Add end prop to the Dashboard link */}
+        <SidebarLink to="/admin" icon={FaTachometerAlt} text="Dashboard" end={true} />
         <SidebarLink to="/admin/patients" icon={FaUsers} text="Patient List" subLinks={[]} />
         <SidebarLink to="/admin/doctors" icon={FaPills} text="Doctors" subLinks={[]} />
         <SidebarLink to="/admin/pharmacy" icon={FaFlask} text="Pharmacy" subLinks={[]} />

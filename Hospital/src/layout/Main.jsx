@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from '../components/Patient/Header';
 import Footer from '../components/Footer';
-import GradientBackground from '../components/Patient/GradientBackground';
+import GradientBackground from '../components/GradientBackground';
 
 
 const Main = () => {
