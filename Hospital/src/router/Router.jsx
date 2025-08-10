@@ -26,6 +26,10 @@ import PharmacyDelivery from "../pages/Patient/PharmacyDelivery";
 import PrescriptionPayment from "../pages/Patient/PrescriptionPayment";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
+import AdminPatient from "../pages/Admin/AdminPatient";
+import AdminDoctor from "../pages/Admin/AdminDoctor";
+import AdminPharmacy from "../pages/Admin/AdminPharmacy";
+import AdminNotification from "../pages/Admin/AdminNotification";
 
 
 
@@ -107,17 +111,15 @@ const router = createBrowserRouter([
 
   {
     path: "/admin",
-    element: (
-      <AdminLayout />
-    ),
+    element: <AdminLayout />,
     children: [
-      // Add admin routes here
-      {
-        path: "",
-        element: <AdminDashboard />
-      },
+      { path: "", element: <AdminDashboard /> },
+      { path: "patients", element: <AdminPatient /> },
+      { path: "doctors", element: <AdminDoctor /> }, 
+      { path: "pharmacy", element: <AdminPharmacy /> },
+      { path: "notifications", element: <AdminNotification /> },
+      { path: "settings", element: <AdminDashboard /> }, 
     ],
-
   },
 
 
