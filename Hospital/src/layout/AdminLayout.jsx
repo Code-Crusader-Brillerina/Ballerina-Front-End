@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import Sidebar from '../components/Admin/Sidebar';
 import { FaRegBell, FaRegUserCircle } from 'react-icons/fa';
 import GradientBackground from '../components/GradientBackground';
+import AdminSidebar from '../components/Admin/AdminSidebar';
 
 
 const AdminLayout = () => {
@@ -12,7 +12,7 @@ const AdminLayout = () => {
     <GradientBackground> {/* Wrap the content with GradientBackground */}
       <div className="flex min-h-screen"> {/* Remove bg-gray-100 from here */}
         {/* Sidebar */}
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         
         {/* Main Content Area */}
         <div className="flex-grow">

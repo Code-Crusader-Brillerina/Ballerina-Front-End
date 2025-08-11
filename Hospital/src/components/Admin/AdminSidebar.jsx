@@ -39,7 +39,7 @@ const SidebarLink = ({ to, icon: Icon, text, subLinks, end }) => {
   );
 };
 
-const Sidebar = () => {
+const AdminSidebar = () => {
   return (
     <div className="w-64 flex-shrink-0 bg-blue-900 text-white p-6">
       {/* Logo/Title */}
@@ -63,4 +63,4 @@ const Sidebar = () => {
   );
 };
 
-export default Sidebar;
+export default AdminSidebar;
