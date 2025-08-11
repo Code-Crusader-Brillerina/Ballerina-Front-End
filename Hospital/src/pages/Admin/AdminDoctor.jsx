@@ -2,12 +2,12 @@ import React from 'react';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 
 const doctors = [
-  { name: 'Dr. Emily Smith', specialization: 'Cardiology', revenue: '$150,000', actions: 'Edit' },
-  { name: 'Dr. John Doe', specialization: 'Pediatrics', revenue: '$120,500', actions: 'Delete' },
-  { name: 'Dr. Sarah Chein', specialization: 'Dermatology', revenue: '$120,500', actions: 'Ediete' }, // Typo in image, using 'Ediete' for consistency
-  { name: 'Dr. John Doe', specialization: 'Dermatology', revenue: '$120,500', actions: 'Delete' },
-  { name: 'Nowish', specialization: 'Neurology', revenue: '$95,200', actions: 'Delete' },
-  { name: 'Hormitch', specialization: 'Neurology', revenue: '$150,200', actions: 'Delete' },
+  { name: 'Dr. Emily Smith', email: 'emily.s@example.com', specialization: 'Cardiology', revenue: '$150,000', actions: 'Edit' },
+  { name: 'Dr. John Doe', email: 'john.d@example.com', specialization: 'Pediatrics', revenue: '$120,500', actions: 'Delete' },
+  { name: 'Dr. Sarah Chein', email: 'sarah.c@example.com', specialization: 'Dermatology', revenue: '$120,500', actions: 'Ediete' },
+  { name: 'Dr. John Doe', email: 'john.d@example.com', specialization: 'Dermatology', revenue: '$120,500', actions: 'Delete' },
+  { name: 'Nowish', email: 'nowish@example.com', specialization: 'Neurology', revenue: '$95,200', actions: 'Delete' },
+  { name: 'Hormitch', email: 'hormitch@example.com', specialization: 'Neurology', revenue: '$150,200', actions: 'Delete' },
 ];
 
 const AdminDoctor = () => {
@@ -26,18 +26,11 @@ const AdminDoctor = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Specialization
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Total Revenue Generated
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Revenue Generated</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -45,6 +38,9 @@ const AdminDoctor = () => {
               <tr key={index}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {doctor.name}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {doctor.email}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {doctor.specialization}

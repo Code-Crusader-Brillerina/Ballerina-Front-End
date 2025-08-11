@@ -30,6 +30,7 @@ import AdminPatient from "../pages/Admin/AdminPatient";
 import AdminDoctor from "../pages/Admin/AdminDoctor";
 import AdminPharmacy from "../pages/Admin/AdminPharmacy";
 import AdminNotification from "../pages/Admin/AdminNotification";
+import AdminMedicine from "../pages/Admin/AdminMedicine";
 
 
 
@@ -117,6 +118,7 @@ const router = createBrowserRouter([
       { path: "patients", element: <AdminPatient /> },
       { path: "doctors", element: <AdminDoctor /> }, 
       { path: "pharmacy", element: <AdminPharmacy /> },
+      { path: "medicine", element: <AdminMedicine /> },
       { path: "notifications", element: <AdminNotification /> },
       { path: "settings", element: <AdminDashboard /> }, 
     ],

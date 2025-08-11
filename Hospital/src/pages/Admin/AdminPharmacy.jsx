@@ -2,12 +2,12 @@ import React from 'react';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 
 const pharmacies = [
-  { name: 'The New Pharmacy', location: 'Kurunegala', revenue: '$150,000', actions: 'Edit' },
-  { name: 'Health Hub Pharmacy', location: 'Colombo', revenue: '$120,500', actions: 'Delete' },
-  { name: 'City Meds', location: 'Kandy', revenue: '$98,750', actions: 'Edit' },
-  { name: 'Quick Care Pharmacy', location: 'Galle', revenue: '$110,200', actions: 'Delete' },
-  { name: 'Central Pharmacy', location: 'Jaffna', revenue: '$95,200', actions: 'Delete' },
-  { name: 'Greenleaf Pharma', location: 'Gampaha', revenue: '$150,200', actions: 'Edit' },
+  { name: 'The New Pharmacy', email: 'info@newpharmacy.com', location: 'Kurunegala', revenue: '$150,000', actions: 'Edit' },
+  { name: 'Health Hub Pharmacy', email: 'contact@healthhub.com', location: 'Colombo', revenue: '$120,500', actions: 'Delete' },
+  { name: 'City Meds', email: 'support@citymeds.lk', location: 'Kandy', revenue: '$98,750', actions: 'Edit' },
+  { name: 'Quick Care Pharmacy', email: 'sales@quickcare.lk', location: 'Galle', revenue: '$110,200', actions: 'Delete' },
+  { name: 'Central Pharmacy', email: 'central@pharmacy.com', location: 'Jaffna', revenue: '$95,200', actions: 'Delete' },
+  { name: 'Greenleaf Pharma', email: 'greenleaf@pharma.com', location: 'Gampaha', revenue: '$150,200', actions: 'Edit' },
 ];
 
 const AdminPharmacy = () => {
@@ -26,18 +26,11 @@ const AdminPharmacy = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Location
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Total Revenue Generated
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Revenue Generated</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -45,6 +38,9 @@ const AdminPharmacy = () => {
               <tr key={index}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {pharmacy.name}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {pharmacy.email}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {pharmacy.location}

@@ -44,7 +44,7 @@ const AdminSidebar = () => {
     <div className="w-64 flex-shrink-0 bg-blue-900 text-white p-6">
       {/* Logo/Title */}
       <div className="flex items-center space-x-2 mb-8">
-        <FaTachometerAlt className="w-8 h-8 text-blue-500" />
+      <img src="/Logo.png" alt="Hallguce Logo" className="h-8 w-8" />
         <h2 className="text-xl font-bold">Admin</h2>
       </div>
 
@@ -53,8 +53,9 @@ const AdminSidebar = () => {
         {/* Add end prop to the Dashboard link */}
         <SidebarLink to="/admin" icon={FaTachometerAlt} text="Dashboard" end={true} />
         <SidebarLink to="/admin/patients" icon={FaUsers} text="Patient List" subLinks={[]} />
-        <SidebarLink to="/admin/doctors" icon={FaPills} text="Doctors" subLinks={[]} />
+        <SidebarLink to="/admin/doctors" icon={FaUserMd} text="Doctors" subLinks={[]} />
         <SidebarLink to="/admin/pharmacy" icon={FaFlask} text="Pharmacy" subLinks={[]} />
+        <SidebarLink to="/admin/Medicine" icon={FaPills} text="Medicine" subLinks={[]} />
         <SidebarLink to="/admin/notifications" icon={FaRegBell} text="Notifications" />
         <SidebarLink to="/admin/settings" icon={FaCog} text="Settings" />
         <SidebarLink to="/logout" icon={FaSignOutAlt} text="Logout" />
