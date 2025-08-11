@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+import AddDoctorModal from '../../components/Admin/AdminDoctor/AddDoctorModal';
+
 
 const doctors = [
   { name: 'Dr. Emily Smith', email: 'emily.s@example.com', specialization: 'Cardiology', revenue: '$150,000', actions: 'Edit' },
@@ -11,17 +13,27 @@ const doctors = [
 ];
 
 const AdminDoctor = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleAddDoctor = (doctorData) => {
+    console.log('Adding new doctor:', doctorData);
+    // In a real application, you would send this data to your API
+    // and then update the 'doctors' state.
+    setIsModalOpen(false); // Close the modal after submission
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-8">
-      {/* Header and Add Doctor Button */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Doctor Management</h1>
-        <button className="bg-blue-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-700 transition-colors">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-blue-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+        >
           + Add Doctor
         </button>
       </div>
 
-      {/* Doctor List Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -64,6 +76,14 @@ const AdminDoctor = () => {
           </tbody>
         </table>
       </div>
+      
+      {/* The modal component */}
+      {isModalOpen && (
+        <AddDoctorModal
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleAddDoctor}
+        />
+      )}
     </div>
   );
 };
