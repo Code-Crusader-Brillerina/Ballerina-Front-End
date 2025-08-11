@@ -16,7 +16,7 @@ const AdminTransaction = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 8;
 
   const filteredTransactions = useMemo(() => {
     let result = transactionsData;
@@ -72,8 +72,8 @@ const AdminTransaction = () => {
               <option value="paid">Paid</option>
               <option value="unpaid">Unpaid</option>
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-              <FaFilter className="h-4 w-4" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2  text-gray-700">
+              <FaFilter className="h-2 w-2" />
             </div>
           </div>
         </div>
