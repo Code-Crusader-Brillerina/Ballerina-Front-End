@@ -18,7 +18,7 @@ const AdminPharmacy = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 8;
 
   const handleAddPharmacy = (pharmacyData) => {
     console.log('Adding new pharmacy:', pharmacyData);

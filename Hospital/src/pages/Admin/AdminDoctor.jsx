@@ -19,7 +19,7 @@ const AdminDoctor = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 8;
 
   const handleAddDoctor = (doctorData) => {
     console.log('Adding new doctor:', doctorData);
