@@ -15,9 +15,6 @@ const AdminPatient = () => {
       {/* Header and Add Patient Button */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Patient Management</h1>
-        <button className="bg-blue-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-700 transition-colors">
-          + Add Patient
-        </button>
       </div>
 
       {/* Patient List Table */}
