@@ -31,6 +31,7 @@ import AdminDoctor from "../pages/Admin/AdminDoctor";
 import AdminPharmacy from "../pages/Admin/AdminPharmacy";
 import AdminNotification from "../pages/Admin/AdminNotification";
 import AdminMedicine from "../pages/Admin/AdminMedicine";
+import AdminTransaction from "../pages/Admin/AdminTransaction";
 
 
 
@@ -115,6 +116,7 @@ const router = createBrowserRouter([
     element: <AdminLayout />,
     children: [
       { path: "", element: <AdminDashboard /> },
+      { path: "transaction", element: <AdminTransaction /> },
       { path: "patients", element: <AdminPatient /> },
       { path: "doctors", element: <AdminDoctor /> }, 
       { path: "pharmacy", element: <AdminPharmacy /> },

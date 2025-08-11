@@ -1,7 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  FaTachometerAlt, FaUsers, FaUserMd, FaPills, FaFlask, FaRegBell, FaCog, FaSignOutAlt
+  FaTachometerAlt, FaUsers, FaUserMd, FaPills, FaFlask, FaRegBell, FaCog, FaSignOutAlt,
+  FaMoneyBill
 } from 'react-icons/fa';
 
 const SidebarLink = ({ to, icon: Icon, text, subLinks, end }) => {
@@ -52,6 +53,7 @@ const AdminSidebar = () => {
       <nav className="space-y-4">
         {/* Add end prop to the Dashboard link */}
         <SidebarLink to="/admin" icon={FaTachometerAlt} text="Dashboard" end={true} />
+        <SidebarLink to="/admin/transaction" icon={FaMoneyBill} text="Transaction" subLinks={[]} />
         <SidebarLink to="/admin/patients" icon={FaUsers} text="Patient List" subLinks={[]} />
         <SidebarLink to="/admin/doctors" icon={FaUserMd} text="Doctors" subLinks={[]} />
         <SidebarLink to="/admin/pharmacy" icon={FaFlask} text="Pharmacy" subLinks={[]} />
