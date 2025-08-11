@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+import AddMedicineModal from '../../components/Admin/AdminMedicine/AddMedicineModal';
+
 
 const medicines = [
   { name: 'Paracetamol', type: 'Tablet', size: '500 mg', description: 'Used for pain relief and fever.', price: 'Rs. 200.00', actions: 'Edit' },
@@ -11,12 +13,24 @@ const medicines = [
 ];
 
 const AdminMedicine = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleAddMedicine = (medicineData) => {
+    console.log('Adding new medicine:', medicineData);
+    // In a real application, you would send this data to your API
+    // and then update the 'medicines' state.
+    setIsModalOpen(false); // Close the modal after submission
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-8">
       {/* Header and Add Medicine Button */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Medicine Management</h1>
-        <button className="bg-blue-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-700 transition-colors">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-blue-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+        >
           + Add Medicine
         </button>
       </div>
@@ -68,6 +82,14 @@ const AdminMedicine = () => {
           </tbody>
         </table>
       </div>
+      
+      {/* The modal component */}
+      {isModalOpen && (
+        <AddMedicineModal
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleAddMedicine}
+        />
+      )}
     </div>
   );
 };
