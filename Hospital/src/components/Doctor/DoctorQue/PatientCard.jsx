@@ -1,7 +1,14 @@
 import React from "react";
 import { FaNotesMedical } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const PatientCard = ({ patient }) => {
+  const navigate = useNavigate();
+
+  const handleViewReports = () => {
+    navigate("/doctor/patient-details"); // Navigates to the page
+  };
+
   return (
     <div
       className={`bg-white rounded-2xl shadow-xl overflow-hidden transition-transform hover:scale-[1.02] ${
@@ -68,7 +75,10 @@ const PatientCard = ({ patient }) => {
           <button className="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg hover:bg-teal-200 transition-colors flex items-center gap-2">
             <FaNotesMedical /> Notes
           </button>
-          <button className="px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg hover:opacity-90 transition-opacity">
+          <button
+            onClick={handleViewReports}
+            className="px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg hover:opacity-90 transition-opacity"
+          >
             View Reports
           </button>
         </div>

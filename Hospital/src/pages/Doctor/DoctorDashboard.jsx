@@ -1,7 +1,7 @@
 import React from "react";
 import { FaUserInjured, FaUserCheck, FaUserClock } from "react-icons/fa";
-import ChartCard from "../../components/Doctor/ChartCard";
-import MetricCard from "../../components/Doctor/MetricCard";
+import ChartCard from "../../components/Doctor/DoctorDashboard/ChartCard";
+import MetricCard from "../../components/Doctor/DoctorDashboard/MetricCard";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -100,7 +100,7 @@ const DoctorDashboard = () => {
           <h2 className="text-2xl font-semibold text-gray-700">Today's Queue</h2>
           <button
             aria-label="Open queue details"
-            onClick={() => navigate("/patients/queue")}
+            onClick={() => navigate("/doctor/today-que")}
             className="p-1 rounded hover:bg-gray-200"
           >
             <svg

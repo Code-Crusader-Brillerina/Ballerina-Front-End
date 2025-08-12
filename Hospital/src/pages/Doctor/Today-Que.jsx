@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { FaUserInjured } from "react-icons/fa";
-import CalendarSection from "../../components/Doctor/CalendarSection";
-import StatsSection from "../../components/Doctor/StatsSection";
-import PatientFilters from "../../components/Doctor/PatientFilters";
-import PatientCard from "../../components/Doctor/PatientCard";
+import CalendarSection from "../../components/Doctor/DoctorQue/CalendarSection";
+import StatsSection from "../../components/Doctor/DoctorQue/StatsSection";
+import PatientFilters from "../../components/Doctor/DoctorQue/PatientFilters";
+import PatientCard from "../../components/Doctor/DoctorQue/PatientCard";
 
 const TodayQue = () => {
   const [date, setDate] = useState(new Date());
