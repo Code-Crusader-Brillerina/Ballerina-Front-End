@@ -1,5 +1,5 @@
 import React from 'react';
-import SearchFilter from '../../components/Patient/SearchFilter';
+import SearchFilter from '../../components/Patient/doctorPage/SearchFilter';
 import Pagination from '../../components/Patient/Pagination';
 import DoctorCard from '../../components/Patient/doctorPage/DoctorCard';
 

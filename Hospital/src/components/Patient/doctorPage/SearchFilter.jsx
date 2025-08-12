@@ -1,7 +1,7 @@
 import React from 'react';
 
 const SearchFilter = () => (
-  <div className="flex flex-col md:flex-row items-center mb-6 space-y-4 md:space-y-0 md:space-x-4">
+  <div className="flex flex-col md:flex-row  bg-white items-center mb-6 space-y-4 md:space-y-0 md:space-x-4">
     <div className="relative flex-grow w-full">
       <input
         type="text"
