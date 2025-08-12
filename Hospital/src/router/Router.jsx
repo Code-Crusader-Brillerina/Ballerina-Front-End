@@ -32,6 +32,12 @@ import AdminPharmacy from "../pages/Admin/AdminPharmacy";
 import AdminNotification from "../pages/Admin/AdminNotification";
 import AdminMedicine from "../pages/Admin/AdminMedicine";
 import AdminTransaction from "../pages/Admin/AdminTransaction";
+import TodayQue from "../pages/Doctor/Today-Que";
+import DoctorAppointment from "../pages/Doctor/DoctorAppointment";
+import DoctorNotification from "../pages/Doctor/DoctorNotification";
+import DoctorVideoConference from "../pages/Doctor/DoctorVideoConference";
+import DoctorPatientDetails from "../pages/Doctor/DoctorPatientDetails";
+import DoctorAddPrescription from "../pages/Doctor/DoctorAddPrescription";
 
 
 
@@ -139,6 +145,36 @@ const router = createBrowserRouter([
         path: "",
         element:
           <DoctorDashboard />
+      },
+      {
+        path: "today-que",
+        element:
+          <TodayQue />
+      },
+      {
+        path: "appointments",
+        element:
+          <DoctorAppointment />
+      },
+      {
+        path: "notifications",
+        element:
+          <DoctorNotification />
+      },
+      {
+        path: "video-conference",
+        element:
+          <DoctorVideoConference />
+      },
+      {
+        path: "patient-details",
+        element:
+          <DoctorPatientDetails />
+      },
+      {
+        path: "add-prescription",
+        element:
+          <DoctorAddPrescription />
       },
     ],
   },
