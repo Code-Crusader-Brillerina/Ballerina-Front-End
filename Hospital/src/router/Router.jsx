@@ -38,6 +38,9 @@ import DoctorNotification from "../pages/Doctor/DoctorNotification";
 import DoctorVideoConference from "../pages/Doctor/DoctorVideoConference";
 import DoctorPatientDetails from "../pages/Doctor/DoctorPatientDetails";
 import DoctorAddPrescription from "../pages/Doctor/DoctorAddPrescription";
+import PharmacyMedicineStock from "../pages/Pharmacy/PharmacyMedicineStock";
+import PharmacyPrescription from "../pages/Pharmacy/PharmacyPrescription";
+import PharmacyNotification from "../pages/Pharmacy/PharmacyNotification";
 
 
 
@@ -193,6 +196,18 @@ const router = createBrowserRouter([
         path: "",
         element: <PharmacyDashboard />
       },
+      {
+        path: "medicine-stock",
+        element: <PharmacyMedicineStock />
+      },
+      {
+        path: "prescription",
+        element: <PharmacyPrescription />
+      },
+      {
+        path: "notifications",
+        element: <PharmacyNotification />
+      }
     ],
   }
 
