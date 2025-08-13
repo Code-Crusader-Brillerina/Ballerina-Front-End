@@ -7,7 +7,7 @@ const doctorsData = new Array(12).fill({
   name: 'Maya Fornado',
   specialty: 'Physiologist',
   education: 'MBBS Colombo University',
-  imageUrl: 'https://via.placeholder.com/150',
+  imageUrl: 'p2.png',
 });
 
 const Doctor = () => {
