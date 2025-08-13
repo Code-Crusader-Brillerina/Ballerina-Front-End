@@ -41,6 +41,8 @@ import DoctorAddPrescription from "../pages/Doctor/DoctorAddPrescription";
 import PharmacyMedicineStock from "../pages/Pharmacy/PharmacyMedicineStock";
 import PharmacyPrescription from "../pages/Pharmacy/PharmacyPrescription";
 import PharmacyNotification from "../pages/Pharmacy/PharmacyNotification";
+import PharmacyPrescriptionDetails from "../pages/Pharmacy/PharmacyPrescriptionDetails";
+
 
 
 
@@ -207,6 +209,10 @@ const router = createBrowserRouter([
       {
         path: "notifications",
         element: <PharmacyNotification />
+      },
+      {
+        path: "pharmacyprescriptiondetails/:id",
+        element: <PharmacyPrescriptionDetails />
       }
     ],
   }
