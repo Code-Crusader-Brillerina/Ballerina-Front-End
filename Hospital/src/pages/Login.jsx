@@ -19,14 +19,15 @@ const Login = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        credentials: 'include', // This is the crucial line to add
       });
 
       const data = await response.json();
 
       if (data.success) {
         console.log('Login successful:', data.message);
-        // In a real app, you would handle the JWT from cookies here.
-        navigate('/dashboard'); 
+        // The cookie should now be stored by the browser.
+        navigate('/dashboard');
       } else {
         setError(data.message || 'Login failed. Please check your credentials.');
       }

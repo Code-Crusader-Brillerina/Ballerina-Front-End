@@ -4,13 +4,12 @@ import Header from '../components/Patient/Header';
 import Footer from '../components/Footer';
 import GradientBackground from '../components/GradientBackground';
 
-
 const Main = () => {
   return (
     <GradientBackground>
       <div className="flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow p-5 bg-transparent"> {/* Add bg-transparent */}
+        <main className="flex-grow p-5 bg-transparent">
           <Outlet />
         </main>
         <Footer />

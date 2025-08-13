@@ -3,8 +3,6 @@ import AboutSection from '../../components/Patient/aboutusPage/AboutSection';
 import MissionSection from '../../components/Patient/aboutusPage/MissionSection';
 import TeamSection from '../../components/Patient/aboutusPage/TeamSection';
 
-
-
 const AboutUs = () => {
   return (
     <div className="container mx-auto p-4 md:p-8">

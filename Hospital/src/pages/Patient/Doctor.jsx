@@ -7,29 +7,20 @@ const doctorsData = new Array(12).fill({
   name: 'Maya Fornado',
   specialty: 'Physiologist',
   education: 'MBBS Colombo University',
-  imageUrl: 'https://via.placeholder.com/150', // Added for the DoctorCard component
+  imageUrl: 'https://via.placeholder.com/150',
 });
 
 const Doctor = () => {
   return (
-    // The parent layout component (Main.jsx) already provides the background.
-    // This div should not have its own background color.
-    <div className="min-h-screen font-sans"> 
-      <div className="container mx-auto px-4 ">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Doctors</h2>
-        
-        <SearchFilter />
-
-
-        {/* Doctors Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {doctorsData.map((doctor, index) => (
-            <DoctorCard key={index} {...doctor} />
-          ))}
-        </div>
-        
-        <Pagination />
+    <div className="container mx-auto p-4 md:p-8">
+      <h2 className="text-3xl font-bold text-gray-800 mb-6">Doctors</h2>
+      <SearchFilter />
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {doctorsData.map((doctor, index) => (
+          <DoctorCard key={index} {...doctor} />
+        ))}
       </div>
+      <Pagination />
     </div>
   );
 };
