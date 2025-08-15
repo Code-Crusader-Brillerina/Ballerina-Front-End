@@ -90,11 +90,11 @@ const router = createBrowserRouter([
         element: <AboutUs />
       },
       {
-        path: "doctorpage/:doctorName/appointment",
+        path: "appointment/:did",
         element: <Appointment />,
       },
       {
-        path: "appointment/payment",
+        path: "appointment/payment/:aid",
         element: <AppointmentPaymentPage />,
       },
       {

@@ -1,7 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { CreditCard, Shield, Lock, CheckCircle, Calendar, Clock, User, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 const AppointmentPaymentPage = () => {
+  const { aid } = useParams();
+  const navigate = useNavigate(); // Import useNavigate for redirection
+  const [appointmentData, setAppointmentData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [paymentProcessing, setPaymentProcessing] = useState(false); // New state for payment loading
+
   const [showCVV, setShowCVV] = useState(false);
   const [formData, setFormData] = useState({
     cardName: '',
@@ -12,16 +20,82 @@ const AppointmentPaymentPage = () => {
     saveCard: false
   });
 
+  useEffect(() => {
+    const fetchAppointmentDetails = async () => {
+      try {
+        const response = await fetch(`http://localhost:8080/patient/appointment/${aid}`, {
+          credentials: 'include'
+        });
+        const result = await response.json();
+
+        if (response.status === 401) {
+          setError('Unauthorized. Please log in again.');
+        } else if (result.success) {
+          setAppointmentData(result.data);
+        } else {
+          setError(result.message || 'Failed to fetch appointment details.');
+        }
+      } catch (err) {
+        setError('An error occurred while fetching appointment details.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (aid) {
+      fetchAppointmentDetails();
+    } else {
+      setError('Appointment ID not provided.');
+      setLoading(false);
+    }
+  }, [aid]);
+
+  // New handler for the "Complete Payment" button
+  const handleCompletePayment = async (e) => {
+    e.preventDefault();
+    setPaymentProcessing(true); // Set loading state for the payment button
+
+    try {
+      // API call to update the appointment status and payment state
+      const response = await fetch(`http://localhost:8080/patient/appointment/${aid}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.status === 401) {
+        alert('Payment failed: Unauthorized. Please log in again.');
+        setPaymentProcessing(false);
+        return;
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('Payment successful! Your appointment is now confirmed.');
+        // Redirect the user to the dashboard or a confirmation page
+        navigate('/dashboard'); 
+      } else {
+        alert(`Payment failed: ${result.message}`);
+        setPaymentProcessing(false);
+      }
+    } catch (err) {
+      console.error('Error during payment:', err);
+      alert('An error occurred during payment. Please try again.');
+      setPaymentProcessing(false);
+    }
+  };
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const formatCardNumber = (value) => {
-    // Remove all non-digit characters
     const cleaned = value.replace(/\D/g, '');
-    // Add spaces every 4 digits
     const formatted = cleaned.replace(/(.{4})/g, '$1 ').trim();
-    return formatted.substring(0, 19); // Limit to 16 digits + 3 spaces
+    return formatted.substring(0, 19);
   };
 
   const handleCardNumberChange = (e) => {
@@ -29,10 +103,51 @@ const AppointmentPaymentPage = () => {
     handleInputChange('cardNumber', formatted);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert('Payment processed successfully!');
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <p className="text-gray-500 text-lg">Loading appointment details...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <p className="text-red-500 text-lg">{error}</p>
+      </div>
+    );
+  }
+  
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
   };
+
+  const getDayOfWeek = (dateString) => {
+    const date = new Date(dateString);
+    const options = { weekday: 'long' };
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  const getTimeSlot = (time) => {
+    switch (time) {
+        case 'morning':
+            return '8:00 AM - 12:00 PM';
+        case 'afternoon':
+            return '2:00 PM - 6:00 PM';
+        case 'evening':
+            return '8:00 PM - 10:00 PM';
+        default:
+            return 'N/A';
+    }
+  };
+
+  const consultationFee = parseInt(appointmentData.doctor.consultationFee, 10);
+  const platformFee = 150;
+  const serviceTax = 350;
+  const totalAmount = consultationFee + platformFee + serviceTax;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -85,23 +200,8 @@ const AppointmentPaymentPage = () => {
               </div>
 
               {/* Card Payment Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Card Icons */}
-                <div className="flex items-center space-x-4 mb-6">
-                  <span className="text-sm font-medium text-gray-700">Accepted Cards:</span>
-                  <div className="flex space-x-3">
-                    <div className="w-12 h-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-xs font-bold">VISA</span>
-                    </div>
-                    <div className="w-12 h-8 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-xs font-bold">MC</span>
-                    </div>
-                    <div className="w-12 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-xs font-bold">AMEX</span>
-                    </div>
-                  </div>
-                </div>
-
+              <form onSubmit={handleCompletePayment} className="space-y-6">
+                {/* ... (form inputs remain the same) ... */}
                 {/* Cardholder Name */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -219,10 +319,17 @@ const AppointmentPaymentPage = () => {
                 <button
                   type="submit"
                   className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 px-6 rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center space-x-2"
+                  disabled={paymentProcessing}
                 >
-                  <Lock className="w-5 h-5" />
-                  <span className="text-lg">Complete Payment</span>
-                  <ArrowRight className="w-5 h-5" />
+                  {paymentProcessing ? (
+                    'Processing...'
+                  ) : (
+                    <>
+                      <Lock className="w-5 h-5" />
+                      <span className="text-lg">Complete Payment</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
                 </button>
               </form>
             </div>
@@ -238,23 +345,23 @@ const AppointmentPaymentPage = () => {
                 <div className="flex items-center space-x-3 p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl">
                   <User className="w-6 h-6 text-blue-600" />
                   <div>
-                    <h4 className="font-semibold text-gray-800">Dr. Maya Fornado</h4>
-                    <p className="text-sm text-gray-600">Physiologist</p>
+                    <h4 className="font-semibold text-gray-800">Dr. {appointmentData.doctor.name}</h4>
+                    <p className="text-sm text-gray-600">{appointmentData.doctor.specialization}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
                   <Calendar className="w-6 h-6 text-green-600" />
                   <div>
-                    <h4 className="font-semibold text-gray-800">December 16, 2024</h4>
-                    <p className="text-sm text-gray-600">Monday</p>
+                    <h4 className="font-semibold text-gray-800">{formatDate(appointmentData.date)}</h4>
+                    <p className="text-sm text-gray-600">{getDayOfWeek(appointmentData.date)}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
                   <Clock className="w-6 h-6 text-orange-600" />
                   <div>
-                    <h4 className="font-semibold text-gray-800">8:00 AM - 12:00 PM</h4>
+                    <h4 className="font-semibold text-gray-800">{getTimeSlot(appointmentData.time)}</h4>
                     <p className="text-sm text-gray-600">Online Consultation</p>
                   </div>
                 </div>
@@ -266,23 +373,23 @@ const AppointmentPaymentPage = () => {
                 
                 <div className="flex justify-between items-center py-2">
                   <span className="text-gray-600">Consultation Fee</span>
-                  <span className="font-semibold text-gray-800">Rs. 2,500.00</span>
+                  <span className="font-semibold text-gray-800">Rs. {consultationFee}</span>
                 </div>
                 
                 <div className="flex justify-between items-center py-2">
                   <span className="text-gray-600">Platform Fee</span>
-                  <span className="font-semibold text-gray-800">Rs. 150.00</span>
+                  <span className="font-semibold text-gray-800">Rs. {platformFee}</span>
                 </div>
                 
                 <div className="flex justify-between items-center py-2">
                   <span className="text-gray-600">Service Tax</span>
-                  <span className="font-semibold text-gray-800">Rs. 350.00</span>
+                  <span className="font-semibold text-gray-800">Rs. {serviceTax}</span>
                 </div>
                 
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-bold text-gray-800">Total Amount</span>
-                    <span className="text-2xl font-bold text-green-600">Rs. 3,000.00</span>
+                    <span className="text-2xl font-bold text-green-600">Rs. {totalAmount}</span>
                   </div>
                 </div>
               </div>

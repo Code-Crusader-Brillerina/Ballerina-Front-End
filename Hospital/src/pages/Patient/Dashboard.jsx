@@ -1,22 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, Video, Clock, User, Pill, Package, CheckCircle, Plus, ArrowRight, Heart, Activity, Stethoscope, Truck, MapPin, Phone } from 'lucide-react';
 
 // Enhanced Appointment Card Component
-const AppointmentCard = ({ doctor, time, type, status = 'upcoming' }) => {
-  const doctorName = doctor.split(' - ')[0].replace('Dr. ', '');
-  const specialty = doctor.split(' - ')[1];
-  
+const AppointmentCard = ({ doctor, time, date, type = 'Online' }) => {
+  const doctorName = doctor.name;
+  const specialty = doctor.specialization;
+
   return (
     <div className="group relative bg-gradient-to-br from-white to-blue-50 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-blue-100">
       <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-500 rounded-bl-3xl rounded-tr-2xl opacity-10"></div>
-      
+
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-4">
           <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
             <Stethoscope className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h3 className="font-bold text-gray-800 text-lg">{doctorName}</h3>
+            <h3 className="font-bold text-gray-800 text-lg">Dr. {doctorName}</h3>
             <p className="text-blue-600 font-medium text-sm">{specialty}</p>
           </div>
         </div>
@@ -26,11 +27,11 @@ const AppointmentCard = ({ doctor, time, type, status = 'upcoming' }) => {
           </span>
         </div>
       </div>
-      
+
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2 text-gray-600">
           <Clock className="w-4 h-4" />
-          <span className="text-sm font-medium">{time}</span>
+          <span className="text-sm font-medium">{time}, {date}</span>
         </div>
         <button className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl">
           <Video className="w-4 h-4" />
@@ -42,12 +43,12 @@ const AppointmentCard = ({ doctor, time, type, status = 'upcoming' }) => {
 };
 
 // Enhanced Completed Appointment Card
-const CompletedAppointmentCard = ({ appointment, onClick, isActive }) => (
+const CompletedAppointmentCard = ({ appointment, onClick, isActive, onNavigateToPrescription }) => (
   <div
     onClick={onClick}
     className={`group cursor-pointer rounded-2xl p-5 transition-all duration-300 transform hover:-translate-y-1 ${
-      isActive 
-        ? 'bg-gradient-to-br from-blue-50 to-purple-50 ring-2 ring-blue-500 shadow-lg' 
+      isActive
+        ? 'bg-gradient-to-br from-blue-50 to-purple-50 ring-2 ring-blue-500 shadow-lg'
         : 'bg-white hover:bg-gray-50 shadow-md hover:shadow-lg border border-gray-100'
     }`}
   >
@@ -59,18 +60,25 @@ const CompletedAppointmentCard = ({ appointment, onClick, isActive }) => (
           <CheckCircle className={`w-6 h-6 ${isActive ? 'text-white' : 'text-gray-600 group-hover:text-blue-600'}`} />
         </div>
         <div>
-          <h4 className="font-semibold text-gray-800">{appointment.doctor}</h4>
+          <h4 className="font-semibold text-gray-800">Dr. {appointment.doctor.name}</h4>
           <p className="text-sm text-gray-500">{appointment.date}</p>
         </div>
       </div>
-      
-      {isActive && (
-        <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg">
-          View Details
+
+      {/* Show the button if a prescription ID exists */}
+      {appointment.prescriptionId && (
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onNavigateToPrescription(appointment.prescriptionId); 
+          }}
+          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg">
+          View Prescription
         </button>
       )}
-      
-      {!isActive && (
+
+      {/* Show a simple arrow if no prescription is linked and the card isn't active */}
+      {!appointment.prescriptionId && !isActive && (
         <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
       )}
     </div>
@@ -79,11 +87,11 @@ const CompletedAppointmentCard = ({ appointment, onClick, isActive }) => (
 
 // Enhanced Prescription Card
 const PrescriptionCard = ({ prescription, isActive, onClick }) => (
-  <div 
-    onClick={onClick} 
+  <div
+    onClick={onClick}
     className={`group cursor-pointer rounded-2xl p-5 transition-all duration-300 transform hover:-translate-y-1 ${
-      isActive 
-        ? 'bg-gradient-to-br from-green-50 to-blue-50 ring-2 ring-green-500 shadow-lg' 
+      isActive
+        ? 'bg-gradient-to-br from-green-50 to-blue-50 ring-2 ring-green-500 shadow-lg'
         : 'bg-white hover:bg-gray-50 shadow-md hover:shadow-lg border border-gray-100'
     }`}
   >
@@ -94,10 +102,10 @@ const PrescriptionCard = ({ prescription, isActive, onClick }) => (
         <Pill className={`w-6 h-6 ${isActive ? 'text-white' : 'text-green-600'}`} />
       </div>
       <div className="flex-1">
-        <h4 className="font-semibold text-gray-800">{prescription.pharmacy}</h4>
+        <h4 className="font-semibold text-gray-800">{prescription.pharmacy.name}</h4>
         <p className="text-sm text-gray-500 flex items-center">
           <Truck className="w-4 h-4 mr-1" />
-          {prescription.date}
+          Delivery Method: {prescription.diliveryMethod}
         </p>
       </div>
       <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-300'} transition-colors`}></div>
@@ -172,43 +180,58 @@ const DeliveryProgress = ({ prescription }) => {
 
 // Main Dashboard Component
 const Dashboard = () => {
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [completedAppointments, setCompletedAppointments] = useState([]);
+  const [prescriptions, setPrescriptions] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [selectedPrescription, setSelectedPrescription] = useState({ id: 1 });
+  const [selectedPrescription, setSelectedPrescription] = useState(null);
 
-  const appointments = [
-    { doctor: 'Dr. Maya Fornado - Cardiologist', time: '10:00 AM, Nov 15, 2025', type: 'Online' },
-    { doctor: 'Dr. John Smith - Neurologist', time: '2:00 PM, Nov 16, 2025', type: 'In-Person' },
-  ];
+  const navigate = useNavigate();
 
-  const completedAppointments = [
-    {
-      id: 1,
-      doctor: 'Dr. John Doe - Cardiologist',
-      date: 'Oct 28, 2025',
-      prescription: 'Take two pills of Atorvastatin daily. Schedule a follow-up in 3 months.',
-      adviser: 'Maintain a low-sodium diet and exercise for 30 minutes, 5 times a week.',
-    },
-    {
-      id: 2,
-      doctor: 'Dr. Jane Smith - Dermatologist',
-      date: 'Nov 01, 2025',
-      prescription: 'Apply Hydrocortisone cream twice daily to the affected area.',
-      adviser: 'Keep the skin moisturized and use gentle, fragrance-free soap.',
-    },
-    {
-      id: 3,
-      doctor: 'Dr. Maya Fornado - Physiologist',
-      date: 'Nov 10, 2025',
-      prescription: 'Start physical therapy exercises. Use cold pack for 15 minutes after each session.',
-      adviser: 'Avoid heavy lifting and report any new pain to the therapist.',
-    },
-  ];
+  // This function handles the navigation to the prescription page
+  const handleNavigateToPrescription = (preId) => {
+    navigate(`/prescription/${preId}`);
+  };
 
-  const prescriptions = [
-    { id: 1, pharmacy: 'Halgouce Pharmacy', date: 'Delivery on Nov 15, 2025' },
-    { id: 2, pharmacy: 'Halgouce Pharmacy', date: 'Delivery on Nov 16, 2025' },
-    { id: 3, pharmacy: 'Halgouce Pharmacy', date: 'Delivered Nov 12, 2025' },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [appointmentsResponse, prescriptionsResponse] = await Promise.all([
+          fetch('http://localhost:8080/patient/getAllAppoinments', { credentials: 'include' }),
+          fetch('http://localhost:8080/patient/getAllPrescriptions', { credentials: 'include' })
+        ]);
+
+        const [appointmentsData, prescriptionsData] = await Promise.all([
+          appointmentsResponse.json(),
+          prescriptionsResponse.json()
+        ]);
+
+        if (appointmentsData.success && prescriptionsData.success) {
+          const fetchedAppointments = appointmentsData.data;
+          const fetchedPrescriptions = prescriptionsData.data;
+          setPrescriptions(fetchedPrescriptions);
+
+          const completed = fetchedAppointments
+            .filter(appt => appt.status === 'compeleted' && appt.paymentState === 'paid')
+            .map(appt => {
+              const matchingPrescription = fetchedPrescriptions.find(p => p.appoinment?.aid === appt.aid);
+              return {
+                ...appt,
+                prescriptionId: matchingPrescription?.preId
+              };
+            });
+          setCompletedAppointments(completed);
+
+          const upcoming = fetchedAppointments.filter(appt => appt.status === 'scheduled' && appt.paymentState === 'paid');
+          setUpcomingAppointments(upcoming);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -239,35 +262,35 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-100 text-sm font-medium">Upcoming</p>
-                <p className="text-3xl font-bold">2</p>
+                <p className="text-3xl font-bold">{upcomingAppointments.length}</p>
                 <p className="text-blue-100 text-sm">Appointments</p>
               </div>
               <Calendar className="w-10 h-10 text-blue-200" />
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-green-500 to-teal-600 text-white rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-100 text-sm font-medium">Active</p>
-                <p className="text-3xl font-bold">3</p>
+                <p className="text-3xl font-bold">{prescriptions.length}</p>
                 <p className="text-green-100 text-sm">Prescriptions</p>
               </div>
               <Pill className="w-10 h-10 text-green-200" />
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-orange-100 text-sm font-medium">Completed</p>
-                <p className="text-3xl font-bold">12</p>
+                <p className="text-3xl font-bold">{completedAppointments.length}</p>
                 <p className="text-orange-100 text-sm">Appointments</p>
               </div>
               <CheckCircle className="w-10 h-10 text-orange-200" />
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
@@ -289,13 +312,17 @@ const Dashboard = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {appointments.map((appt, index) => (
-              <AppointmentCard key={index} {...appt} />
-            ))}
+            {upcomingAppointments.length > 0 ? (
+              upcomingAppointments.map((appt, index) => (
+                <AppointmentCard key={index} {...appt} />
+              ))
+            ) : (
+              <p className="text-gray-500 text-center col-span-2">No upcoming appointments found.</p>
+            )}
           </div>
-          
+
           <div className="flex flex-wrap gap-4">
             <button className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl">
               <Plus className="w-5 h-5" />
@@ -317,32 +344,46 @@ const Dashboard = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-4">
-              {completedAppointments.map(appt => (
-                <CompletedAppointmentCard
-                  key={appt.id}
-                  appointment={appt}
-                  onClick={() => setSelectedAppointment(appt)}
-                  isActive={selectedAppointment?.id === appt.id}
-                />
-              ))}
+              {completedAppointments.length > 0 ? (
+                completedAppointments.map(appt => (
+                  <CompletedAppointmentCard
+                    key={appt.aid}
+                    appointment={appt}
+                    onClick={() => setSelectedAppointment(appt)}
+                    isActive={selectedAppointment?.aid === appt.aid}
+                    onNavigateToPrescription={handleNavigateToPrescription}
+                  />
+                ))
+              ) : (
+                <p className="text-gray-500 text-center">No completed appointments found.</p>
+              )}
             </div>
-            
+
             <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-6">
               {selectedAppointment ? (
                 <div className="space-y-6">
                   <h3 className="text-2xl font-bold text-gray-800">
                     Appointment Summary
                   </h3>
-                  
+
                   <div className="bg-white rounded-2xl p-5 shadow-sm">
                     <h4 className="font-semibold text-blue-600 mb-2 flex items-center">
                       <Pill className="w-5 h-5 mr-2" />
                       Prescriptions
                     </h4>
-                    <p className="text-gray-700">{selectedAppointment.prescription}</p>
+                    <ul className="list-disc list-inside text-gray-700">
+                      {prescriptions
+                        .filter(p => p.appoinment.aid === selectedAppointment.aid)
+                        .flatMap(p => p.items)
+                        .map((item, index) => (
+                          <li key={index}>
+                            <strong>{item.name}:</strong> {item.dosage} {item.frequency}, for {item.duration} days.
+                          </li>
+                        ))}
+                    </ul>
                   </div>
 
                   <div className="bg-white rounded-2xl p-5 shadow-sm">
@@ -350,7 +391,9 @@ const Dashboard = () => {
                       <Stethoscope className="w-5 h-5 mr-2" />
                       Doctor's Advice
                     </h4>
-                    <p className="text-gray-700">{selectedAppointment.adviser}</p>
+                    <p className="text-gray-700">
+                      {prescriptions.find(p => p.appoinment.aid === selectedAppointment.aid)?.note || 'No specific advice found.'}
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -373,19 +416,19 @@ const Dashboard = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-4">
               {prescriptions.map((p) => (
-                <PrescriptionCard 
-                  key={p.id}
+                <PrescriptionCard
+                  key={p.preId}
                   prescription={p}
                   onClick={() => setSelectedPrescription(p)}
-                  isActive={p.id === selectedPrescription?.id}
+                  isActive={p.preId === selectedPrescription?.preId}
                 />
               ))}
             </div>
-            
+
             <div className="bg-gradient-to-br from-gray-50 to-green-50 rounded-2xl p-6">
               <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
                 <Truck className="w-6 h-6 mr-2 text-green-600" />
@@ -394,7 +437,7 @@ const Dashboard = () => {
               <DeliveryProgress prescription={selectedPrescription} />
             </div>
           </div>
-          
+
           <div className="mt-8">
             <button className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold py-4 px-6 rounded-2xl hover:from-green-700 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
               <Plus className="w-5 h-5" />
