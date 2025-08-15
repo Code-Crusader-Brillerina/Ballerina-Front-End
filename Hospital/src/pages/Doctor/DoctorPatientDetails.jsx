@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import PatientHeader from "../../components/Doctor/DoctorPatientDetails/PatientHeader";
 import PatientDetailsTab from "../../components/Doctor/DoctorPatientDetails/PatientDetailsTab";
@@ -10,29 +10,100 @@ import CommentsCard from "../../components/Doctor/DoctorPatientDetails/CommentsC
 const DoctorPatientDetails = () => {
   const [comment, setComment] = useState("");
   const [activeTab, setActiveTab] = useState("details");
+  const [appointmentData, setAppointmentData] = useState(null);
+  const [patientId, setPatientId] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   const navigate = useNavigate();
+  const location = useLocation();
+  const { aid } = location.state || {};
+
+  useEffect(() => {
+    if (!aid) {
+      navigate("/doctor/today-que");
+      return;
+    }
+
+    const fetchAppointmentData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch("http://localhost:8080/doctor/getAppoinment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ aid: aid }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (result.success && result.data) {
+          setAppointmentData(result.data);
+          setPatientId(result.data.pid);
+        }
+      } catch (error) {
+        console.error("Error fetching appointment:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAppointmentData();
+  }, [aid, navigate]);
 
   const handleAddPrescription = () => {
-    navigate("/doctor/add-prescription");
+    navigate("/doctor/add-prescription", {
+      state: {
+        patientId: patientId,
+        appointmentId: appointmentData?.aid,
+      },
+    });
   };
 
   const handleAddComment = () => {
     if (comment.trim() !== "") {
-      alert(`Comment added: ${comment}`);
+      alert(`Comment added for Patient ID ${patientId}: ${comment}`);
       setComment("");
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-indigo-100 p-4 md:p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading patient data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-indigo-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        <PatientHeader />
+        <PatientHeader appointmentData={appointmentData} patientId={patientId} />
+
+        {patientId && (
+          <div className="mb-6 bg-white rounded-lg shadow-md p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-sm text-gray-500">Patient ID:</span>
+                <span className="ml-2 text-lg font-semibold text-blue-600">{patientId}</span>
+              </div>
+              <div className="text-sm text-gray-500">
+                Appointment: {appointmentData?.aid} | Status: {appointmentData?.status}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Patient Details */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-              {/* Tab Navigation */}
               <div className="flex border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
                 <button
                   onClick={() => setActiveTab("details")}
@@ -56,34 +127,58 @@ const DoctorPatientDetails = () => {
                 </button>
               </div>
 
-              {/* Tab Content */}
               <div className="p-6">
-                {activeTab === "details" && <PatientDetailsTab />}
-                {activeTab === "reports" && <MedicalReportsTab />}
+                {activeTab === "details" && (
+                  <PatientDetailsTab appointmentData={appointmentData} patientId={patientId} />
+                )}
+                {activeTab === "reports" && (
+                  <MedicalReportsTab
+                    appointmentData={appointmentData}
+                    patientId={patientId}
+                    reports={appointmentData?.reports}
+                  />
+                )}
               </div>
             </div>
           </div>
 
-          {/* Right Column - Actions */}
           <div className="space-y-6">
-            <PrescriptionCard onAdd={handleAddPrescription} />
+            <PrescriptionCard onAdd={handleAddPrescription} patientId={patientId} />
             <CommentsCard
               comment={comment}
               setComment={setComment}
               onAddComment={handleAddComment}
+              patientId={patientId}
             />
           </div>
         </div>
 
-        {/* Bottom Action Button */}
         <div className="mt-10 text-center">
           <button
             className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-3 rounded-3xl font-semibold text-lg shadow-lg hover:from-indigo-700 hover:to-blue-700 transition"
-            onClick={() => alert("Viewing full patient profile")}
+            onClick={() => {
+              alert(`Viewing full patient profile for Patient ID: ${patientId}`);
+            }}
           >
-            Check
+            View Full Profile
           </button>
         </div>
+
+        {appointmentData && (
+          <div className="mt-6 bg-gray-100 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-700 mb-2">Appointment Details:</h3>
+            <div className="text-sm text-gray-600 space-y-1">
+              <div>Appointment ID: {appointmentData.aid}</div>
+              <div>Patient ID: {appointmentData.pid}</div>
+              <div>Doctor ID: {appointmentData.did}</div>
+              <div>Date: {appointmentData.date}</div>
+              <div>Time: {appointmentData.time}</div>
+              <div>Status: {appointmentData.status}</div>
+              <div>Payment: {appointmentData.paymentState}</div>
+              <div>Reports: {appointmentData.reports?.join(", ")}</div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

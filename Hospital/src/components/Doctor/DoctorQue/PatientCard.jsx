@@ -6,7 +6,9 @@ const PatientCard = ({ patient }) => {
   const navigate = useNavigate();
 
   const handleViewReports = () => {
-    navigate("/doctor/patient-details"); // Navigates to the page
+    navigate("/doctor/patient-details", {
+      state: { aid: patient.aid }, // pass appointment ID
+    });
   };
 
   return (
@@ -19,7 +21,6 @@ const PatientCard = ({ patient }) => {
           : "border-l-4 border-emerald-500"
       }`}
     >
-      {/* Header */}
       <div className="p-4 bg-gradient-to-r from-teal-50 to-cyan-50">
         <div className="flex justify-between items-start">
           <div>
@@ -53,7 +54,6 @@ const PatientCard = ({ patient }) => {
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-4">
         <div className="flex items-start gap-4">
           <img

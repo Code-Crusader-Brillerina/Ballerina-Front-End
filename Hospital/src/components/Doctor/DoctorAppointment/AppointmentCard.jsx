@@ -70,19 +70,6 @@ const AppointmentCard = ({ appt }) => {
               </div>
             </div>
           </div>
-
-          {/* View Details Button */}
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={() => navigate("/doctor/patient-details")}
-              className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-4 py-2 rounded-lg font-medium text-sm flex items-center transition"
-            >
-              View Details
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
         </div>
       </div>
     </div>

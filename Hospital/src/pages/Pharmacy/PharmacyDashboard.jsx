@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import MedicineStatusChart from "../../components/Pharmacy/PharmacyDashbord/MedicineStatusCharts";
 
 const demoItems = [
-  { id: 1, name: "Amoxicillin 500mg", status: "processing", qty: 120 },
+  { id: 1, name: "Amoxicillin 600mg", status: "processing", qty: 120 },
   { id: 2, name: "Paracetamol 1g", status: "sending", qty: 80 },
   { id: 3, name: "Ibuprofen 200mg", status: "received", qty: 300 },
   { id: 4, name: "Aspirin 100mg", status: "processing", qty: 60 },
