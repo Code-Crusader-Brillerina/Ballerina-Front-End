@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import PatientHeader from "../../components/Doctor/DoctorPatientDetails/PatientHeader";
 import PatientDetailsTab from "../../components/Doctor/DoctorPatientDetails/PatientDetailsTab";
@@ -13,20 +13,27 @@ const DoctorPatientDetails = () => {
   const [appointmentData, setAppointmentData] = useState(null);
   const [patientId, setPatientId] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const navigate = useNavigate();
+  const location = useLocation();
+  const { aid } = location.state || {};
 
   useEffect(() => {
+    if (!aid) {
+      navigate("/doctor/today-que");
+      return;
+    }
+
     const fetchAppointmentData = async () => {
       try {
         setLoading(true);
-
         const response = await fetch("http://localhost:8080/doctor/getAppoinment", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({ aid: "002" }),
+          body: JSON.stringify({ aid: aid }),
         });
 
         if (!response.ok) {
@@ -34,7 +41,6 @@ const DoctorPatientDetails = () => {
         }
 
         const result = await response.json();
-
         if (result.success && result.data) {
           setAppointmentData(result.data);
           setPatientId(result.data.pid);
@@ -47,7 +53,7 @@ const DoctorPatientDetails = () => {
     };
 
     fetchAppointmentData();
-  }, []);
+  }, [aid, navigate]);
 
   const handleAddPrescription = () => {
     navigate("/doctor/add-prescription", {

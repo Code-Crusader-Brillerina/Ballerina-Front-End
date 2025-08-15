@@ -11,7 +11,6 @@ const TodayQue = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch patient queue from backend
   useEffect(() => {
     const fetchPatients = async () => {
       try {
@@ -20,7 +19,7 @@ const TodayQue = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ date: "2025-05-03" }), // Replace with dynamic date if needed
+          body: JSON.stringify({ date: "2025-05-03" }), // replace with dynamic date if needed
           credentials: "include",
         });
 
@@ -31,7 +30,6 @@ const TodayQue = () => {
         const apiData = await response.json();
         console.log("API Response:", apiData);
 
-        // ✅ Fix: read from `apiData.data`
         const patientList = Array.isArray(apiData.data) ? apiData.data : [];
         setPatients(patientList);
       } catch (error) {
@@ -45,7 +43,6 @@ const TodayQue = () => {
     fetchPatients();
   }, []);
 
-  // Filter patients safely
   const filteredPatients =
     activeFilter === "all"
       ? patients
@@ -63,7 +60,6 @@ const TodayQue = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-cyan-100 p-4 md:p-6">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-teal-900 flex items-center">
           <FaUserInjured className="mr-3 text-teal-600" />
@@ -78,13 +74,11 @@ const TodayQue = () => {
         </p>
       </div>
 
-      {/* Filters */}
       <PatientFilters
         activeFilter={activeFilter}
         setActiveFilter={setActiveFilter}
       />
 
-      {/* Calendar + Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <CalendarSection date={date} setDate={setDate} />
         <StatsSection
@@ -97,7 +91,6 @@ const TodayQue = () => {
         />
       </div>
 
-      {/* Patient List */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-teal-900 mb-4">
           Today's Patients
