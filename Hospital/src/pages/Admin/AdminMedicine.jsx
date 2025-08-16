@@ -1,37 +1,134 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 import AddMedicineModal from '../../components/Admin/AdminMedicine/AddMedicineModal';
 
-const medicinesData = [
-  { name: 'Paracetamol', type: 'Tablet', size: '500 mg', description: 'Used for pain relief and fever.', price: 'Rs. 200.00', actions: 'Edit' },
-  { name: 'Amoxicillin', type: 'Capsule', size: '250 mg', description: 'An antibiotic used to treat various bacterial infections.', price: 'Rs. 350.00', actions: 'Delete' },
-  { name: 'Omeprazole', type: 'Capsule', size: '20 mg', description: 'Used to treat stomach ulcers and heartburn.', price: 'Rs. 150.00', actions: 'Edit' },
-  { name: 'C Vitamin', type: 'Tablet', size: '1000 mg', description: 'A supplement used to boost the immune system.', price: 'Rs. 500.00', actions: 'Edit' },
-  { name: 'Ibuprofen', type: 'Tablet', size: '200 mg', description: 'A nonsteroidal anti-inflammatory drug (NSAID) for pain and inflammation.', price: 'Rs. 250.00', actions: 'Delete' },
-  { name: 'Loratadine', type: 'Tablet', size: '10 mg', description: 'An antihistamine used to relieve allergy symptoms.', price: 'Rs. 180.00', actions: 'Delete' },
-  { name: 'Aspirin', type: 'Tablet', size: '81 mg', description: 'A common pain reliever and anti-inflammatory.', price: 'Rs. 120.00', actions: 'Edit' },
-  { name: 'Cetirizine', type: 'Tablet', size: '10 mg', description: 'An antihistamine for allergies.', price: 'Rs. 160.00', actions: 'Delete' },
-];
-
 const AdminMedicine = () => {
+  // State variables
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [medicinesData, setMedicinesData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const itemsPerPage = 8;
 
-  const handleAddMedicine = (medicineData) => {
-    console.log('Adding new medicine:', medicineData);
-    setIsModalOpen(false);
+  // Fetch medicines function
+  const fetchMedicines = async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      
+      const response = await fetch('http://localhost:8080/admin/getAllMedicines', {
+        method: 'GET',
+        credentials: 'include', // Include cookies for JWT authentication
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      // Check if response is ok
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        setMedicinesData(result.data);
+        console.log('Medicines loaded successfully:', result.data);
+      } else {
+        throw new Error(result.message || 'Failed to fetch medicine data');
+      }
+    } catch (err) {
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        setError('Cannot connect to server. Please check if the backend is running on http://localhost:8080');
+      } else {
+        setError(err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchMedicines();
+  }, []);
+
+  const handleAddMedicine = async (medicineData) => {
+    try {
+      const response = await fetch('http://localhost:8080/admin/addMedicine', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(medicineData),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          console.log('Medicine added successfully:', medicineData);
+          setIsModalOpen(false);
+          // Refresh the medicines list
+          await fetchMedicines();
+        } else {
+          throw new Error(result.message || 'Failed to add medicine');
+        }
+      } else {
+        throw new Error('Failed to add medicine');
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error('Error adding medicine:', err);
+    }
+  };
+
+  const handleEditMedicine = (medicine) => {
+    // Implement edit functionality
+    console.log('Editing medicine:', medicine);
+  };
+
+  const handleDeleteMedicine = async (medicineId) => {
+    if (window.confirm('Are you sure you want to delete this medicine?')) {
+      try {
+        const response = await fetch(`http://localhost:8080/admin/deleteMedicine/${medicineId}`, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            console.log('Medicine deleted successfully');
+            // Refresh the medicines list
+            await fetchMedicines();
+          } else {
+            throw new Error(result.message || 'Failed to delete medicine');
+          }
+        } else {
+          throw new Error('Failed to delete medicine');
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error('Error deleting medicine:', err);
+      }
+    }
   };
 
   const filteredMedicines = useMemo(() => {
     if (!searchTerm) return medicinesData;
     return medicinesData.filter(medicine =>
-      medicine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      medicine.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      medicine.description.toLowerCase().includes(searchTerm.toLowerCase())
+      medicine.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      medicine.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      medicine.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm]);
+  }, [searchTerm, medicinesData]);
 
   const totalPages = Math.ceil(filteredMedicines.length / itemsPerPage);
   const currentMedicines = useMemo(() => {
@@ -44,6 +141,45 @@ const AdminMedicine = () => {
       setCurrentPage(pageNumber);
     }
   };
+
+  
+
+  // Loading State
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg text-gray-600">Loading medicines...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error State
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-8">
+        <div className="flex flex-col justify-center items-center h-64 space-y-4">
+          <div className="text-lg text-red-600">Error: {error}</div>
+          <button 
+            onClick={fetchMedicines}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
+          <div className="text-sm text-gray-500 text-center">
+            <p>Troubleshooting steps:</p>
+            <ul className="mt-2 space-y-1">
+              <li>• Check if Ballerina service is running on port 8080</li>
+              <li>• Verify you're logged in as admin</li>
+              <li>• Check CORS configuration allows localhost:3000</li>
+              <li>• Check browser console for detailed errors</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-md p-8">
@@ -69,36 +205,53 @@ const AdminMedicine = () => {
 
       {/* Medicine List Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size (mg or ml)</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Small Description</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {currentMedicines.map((medicine, index) => (
-              <tr key={index}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{medicine.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{medicine.type}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{medicine.size}</td>
-                <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{medicine.description}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{medicine.price}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  {medicine.actions === 'Edit' ? (
-                    <button className="text-blue-600 hover:text-blue-900 mr-2"><FaEdit className="inline-block h-4 w-4" /></button>
-                  ) : (
-                    <button className="text-red-600 hover:text-red-900"><FaTrashAlt className="inline-block h-4 w-4" /></button>
-                  )}
-                </td>
+        {currentMedicines.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            No medicines found. {searchTerm && `Try adjusting your search for "${searchTerm}".`}
+          </div>
+        ) : (
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size (mg or ml)</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentMedicines.map((medicine, index) => (
+                <tr key={medicine.id || index} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{medicine.name || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{medicine.type || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{medicine.size || 'N/A'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{medicine.description || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {medicine.price ? `$${medicine.price}` : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button 
+                      onClick={() => handleEditMedicine(medicine)}
+                      className="text-blue-600 hover:text-blue-900 mr-4"
+                      title="Edit medicine"
+                    >
+                      <FaEdit className="inline-block h-4 w-4" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteMedicine(medicine.id)}
+                      className="text-red-600 hover:text-red-900"
+                      title="Delete medicine"
+                    >
+                      <FaTrashAlt className="inline-block h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
       
       {/* Pagination Controls */}
@@ -107,7 +260,7 @@ const AdminMedicine = () => {
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Previous
           </button>
@@ -127,7 +280,7 @@ const AdminMedicine = () => {
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
           </button>
