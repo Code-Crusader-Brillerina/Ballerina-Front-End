@@ -6,10 +6,8 @@ const PrescriptionPayment = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Extract the state passed from the Link component
   const { selectedPharmacy, prescription } = location.state || {};
   
-  // State for the payment form and submission
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [showCVV, setShowCVV] = useState(false);
   const [formData, setFormData] = useState({
@@ -25,7 +23,6 @@ const PrescriptionPayment = () => {
     console.log("Data for Payment Page:", location.state);
   }, [location.state]);
 
-  // If the page is accessed directly without state, redirect
   if (!selectedPharmacy || !prescription) {
     return <Navigate to="/" replace />;
   }
@@ -36,18 +33,17 @@ const PrescriptionPayment = () => {
     setPaymentProcessing(true);
 
     try {
-      // TODO: Create this backend endpoint
-      // This endpoint should update the prescription status to 'paid' 
-      // and confirm the selected pharmacy (phId).
-      const response = await fetch('http://localhost:8080/patient/prescription/finalizePayment', {
-        method: 'PUT', // Or POST
+      // --- CHANGE IS HERE ---
+      // Calling the correct endpoint to update the prescription status.
+      const response = await fetch('http://localhost:8080/patient/updatePrescriptionStatus', {
+        method: 'PUT',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
+        // Sending the request body as required by the new API.
         body: JSON.stringify({
-          preId: prescription.preId,
-          phId: selectedPharmacy.pharmacyInfo.phId
+          preId: prescription.preId
         }),
       });
       
@@ -67,7 +63,6 @@ const PrescriptionPayment = () => {
     }
   };
 
-  // --- Helper functions for the form ---
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -80,13 +75,12 @@ const PrescriptionPayment = () => {
     const formatted = formatCardNumber(e.target.value);
     handleInputChange('cardNumber', formatted);
   };
-  // --- End of helper functions ---
-
 
   const deliveryFee = 160.00;
   const totalAmount = selectedPharmacy.totalPrice + deliveryFee;
 
   return (
+    // ... the rest of your JSX remains exactly the same
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white">
         <div className="container mx-auto px-6 py-8">
@@ -98,9 +92,7 @@ const PrescriptionPayment = () => {
       <div className="container mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Left Column: Payment Form */}
           <div className="lg:col-span-2 bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
-            {/* Bill Details */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">Bill Details</h2>
               <div className="space-y-3 p-4 bg-gray-50 rounded-2xl border">
@@ -121,20 +113,16 @@ const PrescriptionPayment = () => {
               </div>
             </div>
 
-            {/* Card Payment Form */}
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Payment Information</h2>
             <form onSubmit={handlePaymentSubmit} className="space-y-6">
-              {/* Cardholder Name */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Cardholder Name</label>
                 <input type="text" placeholder="Enter name as shown on card" value={formData.cardName} onChange={(e) => handleInputChange('cardName', e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" required />
               </div>
-              {/* Card Number */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Card Number</label>
                 <input type="text" placeholder="1234 5678 9012 3456" value={formData.cardNumber} onChange={handleCardNumberChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" required />
               </div>
-              {/* Expiry and CVV */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Expiry Date</label>
@@ -172,7 +160,6 @@ const PrescriptionPayment = () => {
             </form>
           </div>
 
-          {/* Right Column: Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100 sticky top-8">
               <h3 className="text-2xl font-bold text-gray-800 mb-6">Order Summary</h3>
