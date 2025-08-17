@@ -1,31 +1,65 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
-
-const patientsData = [
-  { name: 'John Doe', email: 'john.doe@example.com', phone: '0771234567', actions: 'Edit' },
-  { name: 'Jane Smith', email: 'jane.smith@example.com', phone: '0769876543', actions: 'Delete' },
-  { name: 'Peter Jones', email: 'peter.j@example.com', phone: '0711122334', actions: 'Edit' },
-  { name: 'Emily White', email: 'emily.w@example.com', phone: '0785566778', actions: 'Delete' },
-  { name: 'Chris Brown', email: 'chris.b@example.com', phone: '0728899001', actions: 'Edit' },
-  { name: 'Alice Green', email: 'alice.g@example.com', phone: '0778899001', actions: 'Edit' },
-  { name: 'Bob Johnson', email: 'bob.j@example.com', phone: '0712233445', actions: 'Delete' },
-  { name: 'Charlie Davis', email: 'charlie.d@example.com', phone: '0763344556', actions: 'Edit' },
-  { name: 'Diana Miller', email: 'diana.m@example.com', phone: '0774455667', actions: 'Delete' },
-];
 
 const AdminPatient = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [patientsData, setPatientsData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const itemsPerPage = 8;
+
+  // Fixed function - moved inside component and corrected variable names
+  const fetchPatients = async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      
+      const response = await fetch('http://localhost:8080/admin/getAllPatient', {
+        method: 'GET',
+        credentials: 'include', // Include cookies for JWT authentication
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      // Check if response is ok
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        setPatientsData(result.data); // Fixed: use setPatientsData instead of setDoctorsData
+        console.log('Patients loaded successfully:', result.data);
+      } else {
+        throw new Error(result.message || 'Failed to fetch patients data');
+      }
+    } catch (err) {
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        setError('Cannot connect to server. Please check if the backend is running on http://localhost:8080');
+      } else {
+        setError(err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load patients on component mount
+  useEffect(() => {
+    fetchPatients();
+  }, []);
 
   const filteredPatients = useMemo(() => {
     if (!searchTerm) return patientsData;
     return patientsData.filter(patient =>
-      patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.phone.toLowerCase().includes(searchTerm.toLowerCase())
+      patient.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.phone?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm]);
+  }, [searchTerm, patientsData]);
 
   const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
   const currentPatients = useMemo(() => {
@@ -38,6 +72,43 @@ const AdminPatient = () => {
       setCurrentPage(pageNumber);
     }
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg text-gray-600">Loading patients...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-8">
+        <div className="flex flex-col justify-center items-center h-64 space-y-4">
+          <div className="text-lg text-red-600">Error: {error}</div>
+          <button 
+            onClick={fetchPatients}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
+          <div className="text-sm text-gray-500 text-center">
+            <p>Troubleshooting steps:</p>
+            <ul className="mt-2 space-y-1">
+              <li>• Check if Ballerina service is running on port 8080</li>
+              <li>• Verify you're logged in as admin</li>
+              <li>• Check CORS configuration allows localhost:3000</li>
+              <li>• Check browser console for detailed errors</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-md p-8">
@@ -54,6 +125,10 @@ const AdminPatient = () => {
           />
           <button
             className="bg-blue-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+            onClick={() => {
+              // Add your add patient logic here
+              console.log('Add patient clicked');
+            }}
           >
             + Add Patient
           </button>
@@ -80,30 +155,49 @@ const AdminPatient = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {currentPatients.map((patient, index) => (
-              <tr key={index}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {patient.name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {patient.email}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {patient.phone}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  {patient.actions === 'Edit' ? (
-                    <button className="text-blue-600 hover:text-blue-900">
-                      <FaEdit className="inline-block h-4 w-4" />
-                    </button>
-                  ) : (
-                    <button className="text-red-600 hover:text-red-900">
-                      <FaTrashAlt className="inline-block h-4 w-4" />
-                    </button>
-                  )}
+            {currentPatients.length > 0 ? (
+              currentPatients.map((patient, index) => (
+                <tr key={patient.id || index}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {patient.name || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {patient.email || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {patient.phone || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex justify-end space-x-2">
+                      <button 
+                        className="text-blue-600 hover:text-blue-900"
+                        onClick={() => {
+                          // Add your edit logic here
+                          console.log('Edit patient:', patient);
+                        }}
+                      >
+                        <FaEdit className="inline-block h-4 w-4" />
+                      </button>
+                      <button 
+                        className="text-red-600 hover:text-red-900"
+                        onClick={() => {
+                          // Add your delete logic here
+                          console.log('Delete patient:', patient);
+                        }}
+                      >
+                        <FaTrashAlt className="inline-block h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
+                  No patients found
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -114,7 +208,7 @@ const AdminPatient = () => {
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Previous
           </button>
@@ -134,7 +228,7 @@ const AdminPatient = () => {
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
           </button>
