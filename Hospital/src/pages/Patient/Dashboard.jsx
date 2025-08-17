@@ -193,45 +193,50 @@ const Dashboard = () => {
     navigate(`/prescription/${preId}`);
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [appointmentsResponse, prescriptionsResponse] = await Promise.all([
-          fetch('http://localhost:8080/patient/getAllAppoinments', { credentials: 'include' }),
-          fetch('http://localhost:8080/patient/getAllPrescriptions', { credentials: 'include' })
-        ]);
+// ...
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const [appointmentsResponse, prescriptionsResponse] = await Promise.all([
+        fetch('http://localhost:8080/patient/getAllAppoinments', { credentials: 'include' }),
+        fetch('http://localhost:8080/patient/getAllPrescriptions', { credentials: 'include' })
+      ]);
 
-        const [appointmentsData, prescriptionsData] = await Promise.all([
-          appointmentsResponse.json(),
-          prescriptionsResponse.json()
-        ]);
+      const [appointmentsData, prescriptionsData] = await Promise.all([
+        appointmentsResponse.json(),
+        prescriptionsResponse.json()
+      ]);
 
-        if (appointmentsData.success && prescriptionsData.success) {
-          const fetchedAppointments = appointmentsData.data;
-          const fetchedPrescriptions = prescriptionsData.data;
-          setPrescriptions(fetchedPrescriptions);
+      if (appointmentsData.success && prescriptionsData.success) {
+        const fetchedAppointments = appointmentsData.data;
+        const fetchedPrescriptions = prescriptionsData.data;
+        setPrescriptions(fetchedPrescriptions);
 
-          const completed = fetchedAppointments
-            .filter(appt => appt.status === 'compeleted' && appt.paymentState === 'paid')
-            .map(appt => {
-              const matchingPrescription = fetchedPrescriptions.find(p => p.appoinment?.aid === appt.aid);
-              return {
-                ...appt,
-                prescriptionId: matchingPrescription?.preId
-              };
-            });
-          setCompletedAppointments(completed);
+        const completed = fetchedAppointments
+          .filter(appt => appt.status === 'completed' && appt.paymentState === 'paid')
+          .map(appt => {
+            const matchingPrescription = fetchedPrescriptions.find(p => p.appoinment?.aid === appt.aid);
+            return {
+              ...appt,
+              prescriptionId: matchingPrescription?.preId
+            };
+          })
+          // Add this filter to remove appointments without a prescription
+          .filter(appt => appt.prescriptionId); 
 
-          const upcoming = fetchedAppointments.filter(appt => appt.status === 'scheduled' && appt.paymentState === 'paid');
-          setUpcomingAppointments(upcoming);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
+        setCompletedAppointments(completed);
+
+        const upcoming = fetchedAppointments.filter(appt => appt.status === 'scheduled' && appt.paymentState === 'paid');
+        setUpcomingAppointments(upcoming);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
-    fetchData();
-  }, []);
+  fetchData();
+}, []);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
