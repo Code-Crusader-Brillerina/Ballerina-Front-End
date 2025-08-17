@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { CreditCard, Shield, Lock, CheckCircle, User, Home, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
@@ -8,6 +8,7 @@ const PrescriptionPayment = () => {
 
   const { selectedPharmacy, prescription } = location.state || {};
   
+  // ... (useState and useEffect hooks remain the same) ...
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [showCVV, setShowCVV] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,6 +24,7 @@ const PrescriptionPayment = () => {
     console.log("Data for Payment Page:", location.state);
   }, [location.state]);
 
+
   if (!selectedPharmacy || !prescription) {
     return <Navigate to="/" replace />;
   }
@@ -33,17 +35,17 @@ const PrescriptionPayment = () => {
     setPaymentProcessing(true);
 
     try {
-      // --- CHANGE IS HERE ---
-      // Calling the correct endpoint to update the prescription status.
       const response = await fetch('http://localhost:8080/patient/updatePrescriptionStatus', {
         method: 'PUT',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
-        // Sending the request body as required by the new API.
+        // --- THIS IS THE CHANGE ---
+        // Updated the request body to include both preId and phId
         body: JSON.stringify({
-          preId: prescription.preId
+          preId: prescription.preId,
+          phId: selectedPharmacy.pharmacyInfo.phId
         }),
       });
       
@@ -63,6 +65,7 @@ const PrescriptionPayment = () => {
     }
   };
 
+  // ... (the rest of the component and JSX remains exactly the same) ...
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -80,7 +83,6 @@ const PrescriptionPayment = () => {
   const totalAmount = selectedPharmacy.totalPrice + deliveryFee;
 
   return (
-    // ... the rest of your JSX remains exactly the same
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white">
         <div className="container mx-auto px-6 py-8">
