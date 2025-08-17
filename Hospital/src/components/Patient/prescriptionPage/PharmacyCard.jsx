@@ -1,35 +1,34 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const PharmacyCard = ({ phId, name, address, price }) => (
-  <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center">
-    <div className="flex items-center justify-center mb-2">
-      {/* You can replace this with a pharmacy image if available */}
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-10 w-10 text-green-600"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
+const PharmacyCard = ({ pharmacy, prescription }) => {
+  const { pharmacyInfo, totalPrice } = pharmacy;
+
+  return (
+    <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center">
+      {/* ... SVG Icon ... */}
+      <div className="flex items-center justify-center mb-2">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h.01M12.003 17h.01M14.343 17h.01M15 12h.01M11.993 12h.01M16.333 12h.01M16.663 8h.01M14.343 8h.01M12.003 8h.01M9.663 8h.01" />
+        </svg>
+      </div>
+      
+      <h3 className="text-lg font-semibold text-gray-800">{pharmacyInfo.name}</h3>
+      <p className="text-sm text-gray-600">{`${pharmacyInfo.city}, ${pharmacyInfo.district}`}</p>
+      <p className="text-lg font-bold text-gray-800 mt-2">{`Rs ${totalPrice.toFixed(2)}`}</p>
+      
+      {/* --- CORRECTED ROUTE --- */}
+      <Link 
+        to="/prescription/payment" // Changed from "prescription/payment"
+        state={{ selectedPharmacy: pharmacy, prescription: prescription }} 
+        className="w-full"
       >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M9.663 17h.01M12.003 17h.01M14.343 17h.01M15 12h.01M11.993 12h.01M16.333 12h.01M16.663 8h.01M14.343 8h.01M12.003 8h.01M9.663 8h.01"
-        />
-      </svg>
+        <button className="w-full bg-blue-600 text-white text-sm mt-4 px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+          Select & Pay
+        </button>
+      </Link>
     </div>
-    <h3 className="text-lg font-semibold text-gray-800">{name}</h3>
-    <p className="text-sm text-gray-600">{address}</p>
-    <p className="text-lg font-bold text-gray-800 mt-2">{price}</p>
-    
-    <Link to={`/pharmacy/${phId}/delivery`} className="w-full">
-      <button className="w-full bg-blue-600 text-white text-sm mt-4 px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-        Select & Pay
-      </button>
-    </Link>
-  </div>
-);
+  );
+};
 
 export default PharmacyCard;

@@ -44,25 +44,25 @@ const PrescriptionPage = () => {
 
     // Function to fetch pharmacy prices based on the prescription
     const fetchPharmacies = async () => {
-        try {
-            setPharmaciesLoading(true);
-            const response = await fetch('http://localhost:8080/patient/calculatePrescriptionPrices', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ preId: id }),
-                credentials: 'include',
-            });
-            const data = await response.json();
-            if (response.ok && data.success) {
-                setPharmacies(data.data);
-            } else {
-                setPharmaciesError(data.message || 'Failed to fetch pharmacy prices.');
-            }
-        } catch (err) {
-            setPharmaciesError('An error occurred while fetching pharmacies.');
-        } finally {
-            setPharmaciesLoading(false);
+      try {
+        setPharmaciesLoading(true);
+        const response = await fetch('http://localhost:8080/patient/calculatePrescriptionPrices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ preId: id }),
+          credentials: 'include',
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+          setPharmacies(data.data);
+        } else {
+          setPharmaciesError(data.message || 'Failed to fetch pharmacy prices.');
         }
+      } catch (err) {
+        setPharmaciesError('An error occurred while fetching pharmacies.');
+      } finally {
+        setPharmaciesLoading(false);
+      }
     };
 
 
@@ -111,7 +111,7 @@ const PrescriptionPage = () => {
   return (
     <div className="container mx-auto p-4 md:p-8">
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Prescription Details</h1>
-      
+
       <PrescriptionDetails
         doctor={doctorInfo}
         patient={patientInfo}
@@ -119,11 +119,12 @@ const PrescriptionPage = () => {
         advice={note}
         appointment={appoinment}
       />
-      
-      <SelectedPharmaciesSection 
-        pharmacies={pharmacies} 
+
+      <SelectedPharmaciesSection
+        pharmacies={pharmacies}
         loading={pharmaciesLoading}
         error={pharmaciesError}
+        prescriptionData={prescriptionData} // Pass the full prescription data down
       />
     </div>
   );
