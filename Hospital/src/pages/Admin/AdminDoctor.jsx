@@ -17,7 +17,7 @@ const AdminDoctor = () => {
       setError(null);
       setLoading(true);
       
-      const response = await fetch('http://localhost:8080/admin/getAllDoctors', {
+      const response = await fetch('http://localhost:8080/patient/getAllDoctors', {
         method: 'GET',
         credentials: 'include', // Include cookies for JWT authentication
         headers: {
@@ -39,7 +39,7 @@ const AdminDoctor = () => {
         throw new Error(result.message || 'Failed to fetch doctors data');
       }
     } catch (err) {
-      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      if (err.username === 'TypeError' && err.message.includes('fetch')) {
         setError('Cannot connect to server. Please check if the backend is running on http://localhost:8080');
       } else {
         setError(err.message);
@@ -64,7 +64,7 @@ const AdminDoctor = () => {
   const filteredDoctors = useMemo(() => {
     if (!searchTerm) return doctorsData;
     return doctorsData.filter(doctor =>
-      doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doctor.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -157,7 +157,7 @@ const AdminDoctor = () => {
             {currentDoctors.length > 0 ? (
               currentDoctors.map((doctor, index) => (
                 <tr key={doctor.id || index}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{doctor.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{doctor.username}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.specialization}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-left">{doctor.revenue || 'N/A'}</td>

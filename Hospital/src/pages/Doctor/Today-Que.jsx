@@ -11,15 +11,25 @@ const TodayQue = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to format date to YYYY-MM-DD
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   useEffect(() => {
     const fetchPatients = async () => {
       try {
+        const formattedDate = formatDate(date); // Use the current date state
+        
         const response = await fetch("http://localhost:8080/doctor/getQueue", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ date: "2025-05-03" }), // replace with dynamic date if needed
+          body: JSON.stringify({ date: formattedDate }), // Dynamic date
           credentials: "include",
         });
 
@@ -41,7 +51,7 @@ const TodayQue = () => {
     };
 
     fetchPatients();
-  }, []);
+  }, [date]); // Add date as dependency so it refetches when date changes
 
   const filteredPatients =
     activeFilter === "all"

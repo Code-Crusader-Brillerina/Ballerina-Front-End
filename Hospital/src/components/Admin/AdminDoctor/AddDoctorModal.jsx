@@ -3,7 +3,7 @@ import { FaTimes } from 'react-icons/fa';
 
 const AddDoctorModal = ({ onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
     role: 'Doctor',
@@ -20,8 +20,8 @@ const AddDoctorModal = ({ onClose, onSubmit }) => {
   });
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
+    const { username, value } = e.target;
+    setFormData((prevData) => ({ ...prevData, [username]: value }));
   };
 
   const handleSubmit = (e) => {
@@ -43,7 +43,7 @@ const AddDoctorModal = ({ onClose, onSubmit }) => {
           {/* User Data Fields */}
           <div className="space-y-4">
             <h4 className="text-lg font-semibold text-gray-700">User Details</h4>
-            <input type="text" name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+            <input type="text" name="username" placeholder="Full Name" value={formData.username} onChange={handleChange} className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
             <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
             <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
             <input type="text" name="phoneNumber" placeholder="Phone Number" value={formData.phoneNumber} onChange={handleChange} className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
