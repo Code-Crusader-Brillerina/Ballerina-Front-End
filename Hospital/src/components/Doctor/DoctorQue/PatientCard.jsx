@@ -6,9 +6,38 @@ const PatientCard = ({ patient }) => {
   const navigate = useNavigate();
 
   const handleViewReports = () => {
-    navigate("/doctor/patient-details", {
-      state: { aid: patient.aid }, // pass appointment ID
-    });
+    // Debug logging
+    console.log("Patient data:", patient);
+    console.log("Available keys:", Object.keys(patient));
+    console.log("QueData:", patient.queData);
+    
+    // Get appointment ID from queData
+    const appointmentId = patient.queData?.aid || patient.queData?.appointmentId || patient.queData?.id;
+    
+    console.log("Trying appointment ID from queData:", appointmentId);
+    
+    // Check if any appointment ID exists
+    if (!appointmentId) {
+      console.error("No appointment ID found in queData!");
+      console.log("QueData structure:", JSON.stringify(patient.queData, null, 2));
+      alert(`Appointment ID not found in queData. Available queData properties: ${patient.queData ? Object.keys(patient.queData).join(', ') : 'queData is null'}`);
+      return;
+    }
+
+    try {
+      navigate("/doctor/patient-details", {
+        state: { aid: appointmentId },
+      });
+    } catch (error) {
+      console.error("Navigation error:", error);
+      alert("Navigation failed. Please try again.");
+    }
+  };
+
+  // Handle notes button click
+  const handleNotes = () => {
+    console.log("Notes clicked for patient:", patient.patientId);
+    // Add your notes functionality here
   };
 
   return (
@@ -60,6 +89,9 @@ const PatientCard = ({ patient }) => {
             src={patient.image}
             alt={patient.name}
             className="w-16 h-16 rounded-xl object-cover border-2 border-teal-200"
+            onError={(e) => {
+              e.target.src = "https://via.placeholder.com/64x64/20B2AA/FFFFFF?text=Patient";
+            }}
           />
           <div>
             <p className="text-gray-700">
@@ -72,7 +104,10 @@ const PatientCard = ({ patient }) => {
         </div>
 
         <div className="mt-4 flex justify-between">
-          <button className="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg hover:bg-teal-200 transition-colors flex items-center gap-2">
+          <button 
+            onClick={handleNotes}
+            className="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg hover:bg-teal-200 transition-colors flex items-center gap-2"
+          >
             <FaNotesMedical /> Notes
           </button>
           <button
