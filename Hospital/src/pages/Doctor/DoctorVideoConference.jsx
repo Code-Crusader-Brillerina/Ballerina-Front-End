@@ -25,14 +25,14 @@ const VideoCall = () => {
 
   return (
     <VideoCallComponent
-      micOn={micOn}
-      cameraOn={cameraOn}
-      callDuration={callDuration}
-      formatTime={formatTime}
-      toggleMic={toggleMic}
-      toggleCamera={toggleCamera}
-      endCall={endCall}
-    />
+  micOn={micOn}
+  cameraOn={cameraOn}
+  callDuration={callDuration}
+  formatTime={formatTime}
+  toggleMic={toggleMic}
+  toggleCamera={toggleCamera}
+  endCall={endCall}
+/>
   );
 };
 

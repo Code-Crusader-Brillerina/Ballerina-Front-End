@@ -37,7 +37,7 @@ import DoctorAppointment from "../pages/Doctor/DoctorAppointment";
 import DoctorNotification from "../pages/Doctor/DoctorNotification";
 import DoctorVideoConference from "../pages/Doctor/DoctorVideoConference";
 import DoctorPatientDetails from "../pages/Doctor/DoctorPatientDetails";
-import DoctorAddPrescription from "../pages/Doctor/DoctorAddPrescription";
+import DoctorAddPrescription from "../pages/Doctor/PrescriptionPage";
 import PharmacyMedicineStock from "../pages/Pharmacy/PharmacyMedicineStock";
 import PharmacyPrescription from "../pages/Pharmacy/PharmacyPrescription";
 import PharmacyNotification from "../pages/Pharmacy/PharmacyNotification";
@@ -175,7 +175,7 @@ const router = createBrowserRouter([
           <DoctorPatientDetails />
       },
       {
-        path: "add-prescription",
+        path: "prescription/:pid",
         element:
           <DoctorAddPrescription />
       },
