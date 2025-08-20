@@ -110,6 +110,8 @@ const Appointment = () => {
                 time: selectedTime,
                 status: 'pending',
                 description: 'New appointment booking',
+                number:0,
+                url:"",
                 
                 // --- THIS IS THE ONLY CHANGE YOU NEED ---
                 // Use the array of Firebase URLs instead of just the file names.

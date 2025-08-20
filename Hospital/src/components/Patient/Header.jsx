@@ -6,24 +6,17 @@ import {
   X, 
   Heart, 
   Shield, 
-  Clock, 
-  Mail, 
-  Phone, 
-  MapPin,
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin,
-  ArrowUp,
-  Stethoscope,
-  Pill,
-  Calendar
+  LogOut 
 } from 'lucide-react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+
 
 // Enhanced Header Component
 const Header = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Mock login state
+  const { isAuthenticated, user, logout, isLoading } = useAuth();
+  const navigate = useNavigate();
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -39,6 +32,15 @@ const Header = () => {
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login'); 
+  };
+
+  if (isLoading) {
+    return <div className="h-20"></div>; 
+  }
 
   return (
     <>
@@ -64,111 +66,66 @@ const Header = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-8">
-              <NavLink 
-                to="/" 
-                end 
-                className={({ isActive }) => 
-                  `relative font-semibold transition-all duration-300 py-2 px-4 rounded-xl ${
-                    isActive 
-                      ? "text-blue-600 bg-blue-50" 
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                  }`
-                }
-              >
+              <NavLink to="/" end className={({ isActive }) => `relative font-semibold transition-all duration-300 py-2 px-4 rounded-xl ${ isActive ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:text-blue-600 hover:bg-gray-50" }`}>
                 Home
-                {({ isActive }) => isActive && (
-                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
-                )}
               </NavLink>
               
-              <NavLink 
-                to="/dashboard" 
-                className={({ isActive }) => 
-                  `relative font-semibold transition-all duration-300 py-2 px-4 rounded-xl ${
-                    isActive 
-                      ? "text-blue-600 bg-blue-50" 
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                  }`
-                }
-              >
-                Dashboard
-              </NavLink>
-              
-              <NavLink 
-                to="/doctorpage" 
-                className={({ isActive }) => 
-                  `relative font-semibold transition-all duration-300 py-2 px-4 rounded-xl ${
-                    isActive 
-                      ? "text-blue-600 bg-blue-50" 
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                  }`
-                }
-              >
+              {/* MODIFICATION 1: Hide Dashboard link if not authenticated (Desktop) */}
+              {isAuthenticated && (
+                <NavLink to="/dashboard" className={({ isActive }) => `relative font-semibold transition-all duration-300 py-2 px-4 rounded-xl ${ isActive ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:text-blue-600 hover:bg-gray-50" }`}>
+                  Dashboard
+                </NavLink>
+              )}
+
+              <NavLink to="/doctorpage" className={({ isActive }) => `relative font-semibold transition-all duration-300 py-2 px-4 rounded-xl ${ isActive ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:text-blue-600 hover:bg-gray-50" }`}>
                 Doctors
               </NavLink>
-              
-              <NavLink 
-                to="/pharmacypage" 
-                className={({ isActive }) => 
-                  `relative font-semibold transition-all duration-300 py-2 px-4 rounded-xl ${
-                    isActive 
-                      ? "text-blue-600 bg-blue-50" 
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                  }`
-                }
-              >
+              <NavLink to="/pharmacypage" className={({ isActive }) => `relative font-semibold transition-all duration-300 py-2 px-4 rounded-xl ${ isActive ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:text-blue-600 hover:bg-gray-50" }`}>
                 Pharmacy
               </NavLink>
-              
-              <NavLink 
-                to="/about-us" 
-                className={({ isActive }) => 
-                  `relative font-semibold transition-all duration-300 py-2 px-4 rounded-xl ${
-                    isActive 
-                      ? "text-blue-600 bg-blue-50" 
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                  }`
-                }
-              >
+              <NavLink to="/about-us" className={({ isActive }) => `relative font-semibold transition-all duration-300 py-2 px-4 rounded-xl ${ isActive ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:text-blue-600 hover:bg-gray-50" }`}>
                 About
               </NavLink>
             </nav>
 
             {/* Right Side Actions */}
             <div className="flex items-center space-x-4">
-              {isLoggedIn ? (
+              {isAuthenticated ? (
                 <>
+                  {/* ... Logged in user dropdown menu ... */}
                   <button className="relative p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200">
                     <Bell className="w-5 h-5" />
                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center text-xs text-white font-bold">3</span>
                   </button>
-                  
                   <div className="group relative">
                     <button className="flex items-center space-x-2 p-2 rounded-xl hover:bg-gray-50 transition-all duration-200">
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center">
                         <User className="w-5 h-5 text-white" />
                       </div>
-                      <span className="hidden md:block font-medium text-gray-700">Eshan</span>
+                      <span className="hidden md:block font-medium text-gray-700">{user?.username || 'User'}</span>
                     </button>
-                    
-                    {/* Dropdown Menu */}
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
                       <div className="p-4 border-b border-gray-100">
-                        <p className="font-semibold text-gray-800">Eshan Senadhi</p>
-                        <p className="text-sm text-gray-500">eshan@halgouce.com</p>
+                        <p className="font-semibold text-gray-800 truncate">{user?.username || 'Guest User'}</p>
+                        <p className="text-sm text-gray-500 truncate">{user?.email || ''}</p>
                       </div>
                       <div className="p-2">
-                        <a href="#" className="flex items-center space-x-2 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors">
+                        <Link to="/dashboard" className="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors">
                           <User className="w-4 h-4 text-gray-500" />
-                          <span className="text-sm text-gray-700">Profile</span>
-                        </a>
-                        <a href="#" className="flex items-center space-x-2 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors">
+                          <span className="text-sm text-gray-700">My Dashboard</span>
+                        </Link>
+                        <Link to="/settings" className="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors">
                           <Shield className="w-4 h-4 text-gray-500" />
-                          <span className="text-sm text-gray-700">Security</span>
-                        </a>
-                        <a href="#" className="flex items-center space-x-2 px-3 py-2 rounded-xl hover:bg-red-50 text-red-600 transition-colors">
-                          <span className="text-sm">Logout</span>
-                        </a>
+                          <span className="text-sm text-gray-700">Account Settings</span>
+                        </Link>
+                        <div className="h-px bg-gray-100 my-2"></div>
+                        <button 
+                          onClick={handleLogout}
+                          className="w-full text-left flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-red-50 text-red-600 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span className="text-sm font-medium">Logout</span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -180,7 +137,6 @@ const Header = () => {
                       Login
                     </button>
                   </Link>
-                  
                   <Link to="/signup">
                     <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold px-6 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                       Get Started
@@ -190,10 +146,7 @@ const Header = () => {
               )}
 
               {/* Mobile Menu Button */}
-              <button 
-                onClick={toggleMobileMenu}
-                className="lg:hidden p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
-              >
+              <button onClick={toggleMobileMenu} className="lg:hidden p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200">
                 {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
             </div>
@@ -201,94 +154,27 @@ const Header = () => {
         </div>
 
         {/* Mobile Menu */}
-        <div className={`lg:hidden transition-all duration-300 overflow-hidden ${
-          isMobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-        }`}>
+        <div className={`lg:hidden transition-all duration-300 overflow-hidden ${isMobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="bg-white/95 backdrop-blur-lg border-t border-gray-200/50">
             <nav className="container mx-auto px-6 py-4 space-y-2">
-              <NavLink 
-                to="/" 
-                end 
-                className={({ isActive }) => 
-                  `block font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${
-                    isActive 
-                      ? "text-blue-600 bg-blue-50" 
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                  }`
-                }
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Home
-              </NavLink>
+              <NavLink to="/" end className={({ isActive }) => `block font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${isActive ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"}`} onClick={() => setIsMobileMenuOpen(false)}>Home</NavLink>
               
-              <NavLink 
-                to="/dashboard" 
-                className={({ isActive }) => 
-                  `block font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${
-                    isActive 
-                      ? "text-blue-600 bg-blue-50" 
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                  }`
-                }
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Dashboard
-              </NavLink>
-              
-              <NavLink 
-                to="/doctorpage" 
-                className={({ isActive }) => 
-                  `block font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${
-                    isActive 
-                      ? "text-blue-600 bg-blue-50" 
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                  }`
-                }
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Doctors
-              </NavLink>
-              
-              <NavLink 
-                to="/pharmacypage" 
-                className={({ isActive }) => 
-                  `block font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${
-                    isActive 
-                      ? "text-blue-600 bg-blue-50" 
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                  }`
-                }
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Pharmacy
-              </NavLink>
-              
-              <NavLink 
-                to="/about-us" 
-                className={({ isActive }) => 
-                  `block font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${
-                    isActive 
-                      ? "text-blue-600 bg-blue-50" 
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                  }`
-                }
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                About
-              </NavLink>
+              {/* MODIFICATION 2: Hide Dashboard link if not authenticated (Mobile) */}
+              {isAuthenticated && (
+                <NavLink to="/dashboard" className={({ isActive }) => `block font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${isActive ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"}`} onClick={() => setIsMobileMenuOpen(false)}>Dashboard</NavLink>
+              )}
 
-              {!isLoggedIn && (
+              <NavLink to="/doctorpage" className={({ isActive }) => `block font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${isActive ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"}`} onClick={() => setIsMobileMenuOpen(false)}>Doctors</NavLink>
+              <NavLink to="/pharmacypage" className={({ isActive }) => `block font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${isActive ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"}`} onClick={() => setIsMobileMenuOpen(false)}>Pharmacy</NavLink>
+              <NavLink to="/about-us" className={({ isActive }) => `block font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${isActive ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"}`} onClick={() => setIsMobileMenuOpen(false)}>About</NavLink>
+              
+              {!isAuthenticated && (
                 <div className="pt-4 space-y-2">
                   <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                    <button className="w-full font-semibold py-3 px-4 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200">
-                      Login
-                    </button>
+                    <button className="w-full text-center font-semibold py-3 px-4 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200">Login</button>
                   </Link>
-                  
                   <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                    <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 px-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg">
-                      Get Started
-                    </button>
+                    <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 px-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg">Get Started</button>
                   </Link>
                 </div>
               )}

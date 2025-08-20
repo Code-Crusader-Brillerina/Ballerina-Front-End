@@ -207,6 +207,7 @@ const Dashboard = () => {
           const paidList = fetchedPrescriptions.filter(p => 
             p.diliveryMethod === 'paid' && p.status === 'order confirmed'
           );
+          // console.log(recentList);
           setPaidPrescriptions(paidList);
 
           // Create a Set of appointment IDs from the paid prescriptions for efficient lookup
@@ -230,6 +231,7 @@ const Dashboard = () => {
             })
             .filter(appt => appt.prescriptionId); // Ensure it has a prescription linked
 
+          console.log(recentList);
           setCompletedAppointments(recentList);
 
           // 3. --- Filter for "Upcoming Appointments" (logic is unchanged) ---
