@@ -1,46 +1,22 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+
 import {
-  FaTachometerAlt, FaUsers, FaUserMd, FaPills, FaFlask, FaRegBell, FaCog, FaSignOutAlt,
-  FaMoneyBill
+  FaTachometerAlt, FaUsers, FaUserMd, FaPills, FaFlask, FaRegBell, FaCog, FaSignOutAlt, FaMoneyBill
 } from 'react-icons/fa';
 
-const SidebarLink = ({ to, icon: Icon, text, subLinks, end }) => {
-  return (
-    <div>
-      <NavLink
-        to={to}
-        end={end}
-        className={({ isActive }) =>
-          `flex items-center space-x-4 px-4 py-3 rounded-lg transition-colors
-          ${isActive ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-lg' : 'text-gray-600 hover:bg-gradient-to-r hover:from-green-100 hover:to-blue-100 hover:text-gray-800'}`
-        }
-      >
-        <Icon className="w-5 h-5" />
-        <span className="font-medium">{text}</span>
-      </NavLink>
-      {subLinks && subLinks.length > 0 && (
-        <ul className="pl-10 mt-2 space-y-2">
-          {subLinks.map((link, index) => (
-            <li key={index}>
-              <NavLink
-                to={link.to}
-                className={({ isActive }) =>
-                  `block text-sm py-2 px-2 rounded-md transition-colors
-                  ${isActive ? 'bg-gradient-to-r from-green-400 to-blue-400 text-white' : 'text-gray-500 hover:text-gray-700 hover:bg-green-50'}`
-                }
-              >
-                {link.text}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
-
+import { useAuth } from '../../context/AuthContext';
+import SidebarLink from '../SidebarLink';
 const AdminSidebar = () => {
+  const { logout } = useAuth(); // 2. Get logout function from context
+  const navigate = useNavigate();
+
+  // 3. Create a handler for the logout action
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login'); // Redirect to login page after logout
+  };
+
   return (
     <div className="w-64 flex-shrink-0 bg-gradient-to-b from-white via-green-25 to-blue-50 border-r border-green-100/50 text-gray-700 p-6 shadow-lg">
       {/* Logo/Title */}
@@ -52,14 +28,16 @@ const AdminSidebar = () => {
       {/* Navigation */}
       <nav className="space-y-3">
         <SidebarLink to="/admin" icon={FaTachometerAlt} text="Dashboard" end={true} />
-        <SidebarLink to="/admin/transaction" icon={FaMoneyBill} text="Transaction" subLinks={[]} />
-        <SidebarLink to="/admin/patients" icon={FaUsers} text="Patient List" subLinks={[]} />
-        <SidebarLink to="/admin/doctors" icon={FaUserMd} text="Doctors" subLinks={[]} />
-        <SidebarLink to="/admin/pharmacy" icon={FaFlask} text="Pharmacy" subLinks={[]} />
-        <SidebarLink to="/admin/Medicine" icon={FaPills} text="Medicine" subLinks={[]} />
+        <SidebarLink to="/admin/transaction" icon={FaMoneyBill} text="Transaction" />
+        <SidebarLink to="/admin/patients" icon={FaUsers} text="Patient List" />
+        <SidebarLink to="/admin/doctors" icon={FaUserMd} text="Doctors" />
+        <SidebarLink to="/admin/pharmacy" icon={FaFlask} text="Pharmacy" />
+        <SidebarLink to="/admin/Medicine" icon={FaPills} text="Medicine" />
         <SidebarLink to="/admin/notifications" icon={FaRegBell} text="Notifications" />
         <SidebarLink to="/admin/settings" icon={FaCog} text="Settings" />
-        <SidebarLink to="/logout" icon={FaSignOutAlt} text="Logout" />
+        
+        {/* 4. Use the onClick prop for the logout button */}
+        <SidebarLink icon={FaSignOutAlt} text="Logout" onClick={handleLogout} />
       </nav>
     </div>
   );
