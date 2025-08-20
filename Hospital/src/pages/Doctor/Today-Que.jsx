@@ -14,34 +14,72 @@ const TodayQue = () => {
   // Helper function to format date to YYYY-MM-DD
   const formatDate = (date) => {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  };
+
+  // Helper function to map API status to display status
+  const mapApiStatusToDisplay = (apiStatus) => {
+    switch(apiStatus) {
+      case 'pending': return 'waiting';
+      case 'in-progress': return 'in-progress';
+      case 'completed': return 'completed';
+      default: return 'waiting';
+    }
   };
 
   useEffect(() => {
     const fetchPatients = async () => {
       try {
-        const formattedDate = formatDate(date); // Use the current date state
+        setLoading(true);
+        const formattedDate = formatDate(date);
         
         const response = await fetch("http://localhost:8080/doctor/getQueue", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ date: formattedDate }), // Dynamic date
+          body: JSON.stringify({ date: formattedDate }),
           credentials: "include",
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch patients");
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const apiData = await response.json();
         console.log("API Response:", apiData);
 
+        // Ensure we have data and it's an array
         const patientList = Array.isArray(apiData.data) ? apiData.data : [];
-        setPatients(patientList);
+        
+        // Transform the data to match what the component expects
+        const transformedPatients = patientList.map(item => ({
+          // Flatten the structure and add computed properties
+          ...item,
+          // Map user data for easier access
+          name: item.user?.username || 'Unknown Patient',
+          username: item.user?.username || 'Unknown',
+          phoneNumber: item.user?.phoneNumber || 'No phone',
+          address: `${item.user?.city || 'Unknown city'}, ${item.user?.district || 'Unknown district'}`,
+          patientId: item.user?.uid || 'No ID',
+          image: item.user?.profilepic || "https://via.placeholder.com/64x64/20B2AA/FFFFFF?text=Patient",
+          university: item.user?.email || 'No email',
+          // Map appointment data
+          time: item.queData?.time || 'No time set',
+          status: mapApiStatusToDisplay(item.queData?.status),
+          // Keep original nested structure for navigation
+          queData: item.queData,
+          user: item.user
+        }));
+        
+        // Debug log to check transformed data structure
+        if (transformedPatients.length > 0) {
+          console.log("First transformed patient:", transformedPatients[0]);
+        }
+        
+        setPatients(transformedPatients);
       } catch (error) {
         console.error("Error fetching patient queue:", error);
         setPatients([]);
@@ -51,19 +89,25 @@ const TodayQue = () => {
     };
 
     fetchPatients();
-  }, [date]); // Add date as dependency so it refetches when date changes
+  }, [date]);
 
-  const filteredPatients =
-    activeFilter === "all"
-      ? patients
-      : Array.isArray(patients)
-      ? patients.filter((p) => p.status === activeFilter)
-      : [];
+  // Update filtering to work with both original API status and display status
+  const filteredPatients = activeFilter === "all"
+    ? patients
+    : Array.isArray(patients)
+    ? patients.filter((p) => {
+        // Filter by display status for UI filters
+        return p.status === activeFilter;
+      })
+    : [];
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <p className="text-lg text-teal-700">Loading patient queue...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+          <p className="text-lg text-teal-700">Loading patient queue...</p>
+        </div>
       </div>
     );
   }
@@ -107,14 +151,25 @@ const TodayQue = () => {
         </h2>
         {filteredPatients.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredPatients.map((p, index) => (
-              <PatientCard key={index} patient={p} />
+            {filteredPatients.map((patient, index) => (
+              <PatientCard 
+                key={patient.queData?.aid || patient.user?.uid || index} 
+                patient={patient} 
+              />
             ))}
           </div>
         ) : (
-          <p className="text-teal-700">No patients found for this filter.</p>
+          <div className="text-center py-8">
+            <p className="text-teal-700 text-lg">
+              {patients.length === 0 
+                ? "No patients scheduled for this date." 
+                : "No patients found for this filter."}
+            </p>
+          </div>
         )}
       </div>
+
+      
     </div>
   );
 };
