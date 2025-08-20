@@ -19,6 +19,16 @@ const TodayQue = () => {
     return `${year}-${month}-${day}`;
   };
 
+  // Helper function to map API status to display status
+  const mapApiStatusToDisplay = (apiStatus) => {
+    switch(apiStatus) {
+      case 'pending': return 'waiting';
+      case 'in-progress': return 'in-progress';
+      case 'completed': return 'completed';
+      default: return 'waiting';
+    }
+  };
+
   useEffect(() => {
     const fetchPatients = async () => {
       try {
@@ -44,13 +54,32 @@ const TodayQue = () => {
         // Ensure we have data and it's an array
         const patientList = Array.isArray(apiData.data) ? apiData.data : [];
         
-        // Debug log to check patient data structure
-        if (patientList.length > 0) {
-          console.log("First patient structure:", patientList[0]);
-          console.log("Patient has aid?", patientList[0].aid);
+        // Transform the data to match what the component expects
+        const transformedPatients = patientList.map(item => ({
+          // Flatten the structure and add computed properties
+          ...item,
+          // Map user data for easier access
+          name: item.user?.username || 'Unknown Patient',
+          username: item.user?.username || 'Unknown',
+          phoneNumber: item.user?.phoneNumber || 'No phone',
+          address: `${item.user?.city || 'Unknown city'}, ${item.user?.district || 'Unknown district'}`,
+          patientId: item.user?.uid || 'No ID',
+          image: item.user?.profilepic || "https://via.placeholder.com/64x64/20B2AA/FFFFFF?text=Patient",
+          university: item.user?.email || 'No email',
+          // Map appointment data
+          time: item.queData?.time || 'No time set',
+          status: mapApiStatusToDisplay(item.queData?.status),
+          // Keep original nested structure for navigation
+          queData: item.queData,
+          user: item.user
+        }));
+        
+        // Debug log to check transformed data structure
+        if (transformedPatients.length > 0) {
+          console.log("First transformed patient:", transformedPatients[0]);
         }
         
-        setPatients(patientList);
+        setPatients(transformedPatients);
       } catch (error) {
         console.error("Error fetching patient queue:", error);
         setPatients([]);
@@ -62,10 +91,14 @@ const TodayQue = () => {
     fetchPatients();
   }, [date]);
 
+  // Update filtering to work with both original API status and display status
   const filteredPatients = activeFilter === "all"
     ? patients
     : Array.isArray(patients)
-    ? patients.filter((p) => p.status === activeFilter)
+    ? patients.filter((p) => {
+        // Filter by display status for UI filters
+        return p.status === activeFilter;
+      })
     : [];
 
   if (loading) {
@@ -120,7 +153,7 @@ const TodayQue = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredPatients.map((patient, index) => (
               <PatientCard 
-                key={patient.aid || patient.patientId || index} 
+                key={patient.queData?.aid || patient.user?.uid || index} 
                 patient={patient} 
               />
             ))}

@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import PrescriptionRow from "../../components/Doctor/DoctorAddPrescription/PrescriptionRow";
 
 const PrescriptionPage = () => {
   const navigate = useNavigate();
+  const { pid } = useParams(); // 👈 Get pid here
   const [prescriptions, setPrescriptions] = useState([
     { medicine: "", dosage: "", duration: "" },
   ]);
@@ -16,7 +17,10 @@ const PrescriptionPage = () => {
   };
 
   const addPrescription = () => {
-    setPrescriptions([...prescriptions, { medicine: "", dosage: "", duration: "" }]);
+    setPrescriptions([
+      ...prescriptions,
+      { medicine: "", dosage: "", duration: "" },
+    ]);
   };
 
   const removePrescription = (index) => {
@@ -25,8 +29,9 @@ const PrescriptionPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log("PID:", pid); 
     console.log("Prescription Data:", prescriptions);
-    alert("Prescription Saved!");
+    alert(`Prescription for patient ${pid} saved!`);
     navigate("/doctor/dashboard");
   };
 
@@ -44,7 +49,9 @@ const PrescriptionPage = () => {
 
       {/* Title */}
       <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h1 className="text-2xl font-bold text-teal-800 mb-4">Prescription</h1>
+        <h1 className="text-2xl font-bold text-teal-800 mb-4">
+          Prescription for Patient {pid}
+        </h1>
 
         <form onSubmit={handleSubmit}>
           {prescriptions.map((prescription, index) => (

@@ -5,9 +5,16 @@ import { Calendar, Video, Clock, User, Pill, Package, CheckCircle, Plus, ArrowRi
 // NOTE: Your sub-components (AppointmentCard, CompletedAppointmentCard, etc.) do not need any changes.
 
 // Enhanced Appointment Card Component
-const AppointmentCard = ({ doctor, time, date, type = 'Online' }) => {
+const AppointmentCard = ({ doctor, time, date, type = "Online", url="https://meet.jit.si/h" }) => {
   const doctorName = doctor.name;
   const specialty = doctor.specialization;
+  const navigate = useNavigate();
+
+  const handleJoin = () => {
+    navigate(`/video-conference/${doctorName}`, {
+      state: { doctor, url },
+    });
+  };
 
   return (
     <div className="group relative bg-gradient-to-br from-white to-blue-50 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-blue-100">
@@ -31,9 +38,14 @@ const AppointmentCard = ({ doctor, time, date, type = 'Online' }) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2 text-gray-600">
           <Clock className="w-4 h-4" />
-          <span className="text-sm font-medium">{time}, {date}</span>
+          <span className="text-sm font-medium">
+            {time}, {date}
+          </span>
         </div>
-        <button className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+        <button
+          onClick={handleJoin}
+          className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+        >
           <Video className="w-4 h-4" />
           <span className="font-medium">Join</span>
         </button>
