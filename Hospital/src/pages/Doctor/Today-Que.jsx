@@ -119,50 +119,28 @@ const TodayQue = () => {
         const patientList = Array.isArray(apiData.data) ? apiData.data : [];
         
         // Transform the data to match what the component expects
-        const transformedPatients = patientList.map((item, index) => {
-          // Create appointment ID from available data
-          const appointmentId = item.queData?.aid || 
-                               item.queData?.appointmentId || 
-                               item.queData?.id ||
-                               item.aid ||
-                               item.appointmentId ||
-                               item.id ||
-                               item.user?.uid ||
-                               `temp_id_${index}`;
-
-          console.log(`Patient ${index} - appointmentId: ${appointmentId}`, item);
-
-          return {
-            // Flatten the structure and add computed properties
-            ...item,
-            // Add explicit appointment ID
-            appointmentId: appointmentId,
-            // Map user data for easier access
-            name: item.user?.username || 'Unknown Patient',
-            username: item.user?.username || 'Unknown',
-            phoneNumber: item.user?.phoneNumber || 'No phone',
-            address: `${item.user?.city || 'Unknown city'}, ${item.user?.district || 'Unknown district'}`,
-            patientId: item.user?.uid || 'No ID',
-            image: item.user?.profilepic || "https://via.placeholder.com/64x64/20B2AA/FFFFFF?text=Patient",
-            university: item.user?.email || 'No email',
-            // Map appointment data
-            time: item.queData?.time || 'No time set',
-            status: mapApiStatusToDisplay(item.queData?.status),
-            // Ensure queData exists even if null from API
-            queData: item.queData || {
-              aid: appointmentId,
-              status: 'pending',
-              time: 'No time set'
-            },
-            // Keep original nested structure for navigation
-            user: item.user
-          };
-        });
+        const transformedPatients = patientList.map(item => ({
+          // Flatten the structure and add computed properties
+          ...item,
+          // Map user data for easier access
+          name: item.user?.username || 'Unknown Patient',
+          username: item.user?.username || 'Unknown',
+          phoneNumber: item.user?.phoneNumber || 'No phone',
+          address: `${item.user?.city || 'Unknown city'}, ${item.user?.district || 'Unknown district'}`,
+          patientId: item.user?.uid || 'No ID',
+          image: item.user?.profilepic || "https://via.placeholder.com/64x64/20B2AA/FFFFFF?text=Patient",
+          university: item.user?.email || 'No email',
+          // Map appointment data
+          time: item.queData?.time || 'No time set',
+          status: mapApiStatusToDisplay(item.queData?.status),
+          // Keep original nested structure for navigation
+          queData: item.queData,
+          user: item.user
+        }));
         
         // Debug log to check transformed data structure
         if (transformedPatients.length > 0) {
           console.log("First transformed queue patient:", transformedPatients[0]);
-          console.log("First patient queData:", transformedPatients[0].queData);
         }
         
         setPatients(transformedPatients);
@@ -214,6 +192,8 @@ const TodayQue = () => {
         </p>
       </div>
 
+    
+
       <PatientFilters
         activeFilter={activeFilter}
         setActiveFilter={setActiveFilter}
@@ -239,7 +219,7 @@ const TodayQue = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredPatients.map((patient, index) => (
               <PatientCard 
-                key={patient.appointmentId || patient.queData?.aid || patient.user?.uid || index} 
+                key={patient.queData?.aid || patient.user?.uid || index} 
                 patient={patient} 
               />
             ))}

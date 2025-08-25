@@ -51,15 +51,6 @@ const PrescriptionCard = ({ pid, appointmentData, onAdd }) => {
     setPrescriptions(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleAddComment = () => {
-    if (!comment.trim()) {
-      alert("Please write a comment before adding.");
-      return;
-    }
-    console.log("Doctor's Comment:", comment);
-    alert("Comment added successfully!");
-  };
-
   // Utility Functions
   const generatePrescriptionId = () => {
     return Math.floor(Math.random() * 1000).toString().padStart(3, '0');
@@ -76,9 +67,21 @@ const PrescriptionCard = ({ pid, appointmentData, onAdd }) => {
       return;
     }
 
-    if (!pid || !appointmentData?.aid) {
-      alert("Missing patient or appointment information.");
+    // Debug logging
+    console.log("Debug - pid:", pid);
+    console.log("Debug - appointmentData:", appointmentData);
+    console.log("Debug - appointmentData.aid:", appointmentData?.aid);
+
+    if (!pid) {
+      alert(`Missing patient information. PID: ${pid || 'missing'}`);
       return;
+    }
+
+    // Generate a default AID if not provided
+    const appointmentId = appointmentData?.aid || `temp_${Date.now().toString().slice(-6)}`;
+    
+    if (!appointmentData?.aid) {
+      console.warn("No appointment ID provided, using temporary ID:", appointmentId);
     }
 
     setLoading(true);
@@ -86,7 +89,7 @@ const PrescriptionCard = ({ pid, appointmentData, onAdd }) => {
     try {
       const items = prescriptions.map((prescription, index) => ({
         preItemId: generateItemId(index),
-        mediId: "002",
+        mediId: "002", // You might want to make this dynamic based on medicine selection
         dosage: prescription.dosage,
         frequency: prescription.frequency,
         duration: prescription.duration,
@@ -98,12 +101,12 @@ const PrescriptionCard = ({ pid, appointmentData, onAdd }) => {
         preId: generatePrescriptionId(),
         pid: pid,
         did: appointmentData.did || "",
-        aid: appointmentData.aid,
+        aid: appointmentId, // Use the appointmentId (either provided or generated)
         dateTime: new Date().toISOString().split('T')[0].replace(/-/g, '.'),
         diliveryMethod: "COD",
         phId: "005",
         status: "good",
-        note: comment.trim() || "no",
+        note: comment.trim() || "no", // This now properly uses the doctor's comment
         items: items
       };
 
@@ -169,11 +172,11 @@ const PrescriptionCard = ({ pid, appointmentData, onAdd }) => {
               className="flex justify-between items-center bg-gradient-to-r from-blue-50 to-cyan-50 p-3 rounded-lg border border-blue-100"
             >
               <div className="flex-1">
-                <div className="font-medium text-blue-800">{prescription.name} {prescription.dosage}</div>
-                <div className="text-sm text-blue-600">{prescription.frequency} • {prescription.duration}</div>
-                <div className="text-xs text-blue-500">Qty: {prescription.quantity}</div>
-                {prescription.instructions && (
-                  <div className="text-xs text-gray-600 mt-1">Note: {prescription.instructions}</div>
+                <div className="font-medium text-blue-800">{prescription.name} - {prescription.dosage}</div>
+                <div className="text-sm text-blue-600">{prescription.frequency} times daily • {prescription.duration} days</div>
+                <div className="text-xs text-blue-500">Quantity: {prescription.quantity}</div>
+                {prescription.instructions && prescription.instructions !== "no" && (
+                  <div className="text-xs text-gray-600 mt-1">Instructions: {prescription.instructions}</div>
                 )}
               </div>
               <button
@@ -240,17 +243,21 @@ const PrescriptionCard = ({ pid, appointmentData, onAdd }) => {
         <textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="Add clinical notes, patient instructions, or follow-up recommendations..."
-          className="w-full p-3 rounded-lg border border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-300 resize-y min-h-[100px] transition-all"
+          placeholder="Add clinical notes, patient instructions, follow-up recommendations, or any special observations..."
+          className="w-full p-3 rounded-lg border border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-300 resize-y min-h-[120px] transition-all"
           rows="4"
         />
 
-        <button
-          onClick={handleAddComment}
-          className="mt-3 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium w-full transition-colors"
-        >
-          Add Comment
-        </button>
+        <div className="mt-3 text-sm text-gray-600">
+          <span className="font-medium">Note:</span> These comments will be included in the prescription record and can be viewed by the patient and pharmacy.
+        </div>
+
+        {comment.trim() && (
+          <div className="mt-3 p-3 bg-purple-100 border border-purple-200 rounded-lg">
+            <div className="text-sm font-medium text-purple-800 mb-1">Preview:</div>
+            <div className="text-sm text-purple-700 italic">"{comment}"</div>
+          </div>
+        )}
       </div>
 
       {/* Save to Database Button */}
@@ -274,7 +281,7 @@ const PrescriptionCard = ({ pid, appointmentData, onAdd }) => {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
               </svg>
-              Save Prescription to Database
+              Save Prescription 
             </>
           )}
         </button>
@@ -287,6 +294,11 @@ const PrescriptionCard = ({ pid, appointmentData, onAdd }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               {prescriptions.length} prescription{prescriptions.length > 1 ? 's' : ''} ready to save
+              {comment.trim() && (
+                <span className="ml-2 px-2 py-1 bg-purple-200 text-purple-800 rounded-full text-xs">
+                  + Doctor's note
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -298,30 +310,7 @@ const PrescriptionCard = ({ pid, appointmentData, onAdd }) => {
         )}
       </div>
 
-      {/* Quick Actions */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
-        <div className="flex flex-col sm:flex-row gap-2">
-          <button
-            onClick={() => {
-              if (window.confirm('Clear all prescriptions?')) {
-                setPrescriptions([]);
-                setComment('');
-              }
-            }}
-            className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
-          >
-            Clear All
-          </button>
-          {onAdd && (
-            <button
-              onClick={onAdd}
-              className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
-            >
-              Advanced Options
-            </button>
-          )}
-        </div>
-      </div>
+
     </div>
   );
 };
