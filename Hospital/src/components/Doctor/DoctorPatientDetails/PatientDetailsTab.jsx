@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 
 const PatientDetailsTab = ({ appointmentData, patientId, fallbackPatient }) => {
+  const [showVideoCall, setShowVideoCall] = useState(false);
+
   const defaultDescription = `
     No description available for this appointment. The patient was examined and 
     relevant diagnostic assessments were carried out. Clinical findings, observations, 
@@ -39,6 +41,10 @@ const PatientDetailsTab = ({ appointmentData, patientId, fallbackPatient }) => {
   const patientEmail = user?.email || fallbackUserData?.email || 'N/A';
   const patientPhone = user?.phoneNumber || fallbackUserData?.phoneNumber || 'N/A';
   const patientCity = user?.city || fallbackUserData?.city || 'N/A';
+
+  const handleJoinCall = () => {
+    setShowVideoCall(true);
+  };
 
   return (
     <div>
@@ -135,15 +141,39 @@ const PatientDetailsTab = ({ appointmentData, patientId, fallbackPatient }) => {
                   <p className="text-green-600 text-sm">Click to join the consultation</p>
                 </div>
               </div>
-              <a
-                href={appointment.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Join Call
-              </a>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleJoinCall}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Join Call
+                </button>
+                {showVideoCall && (
+                  <button
+                    onClick={() => setShowVideoCall(false)}
+                    className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    Hide Call
+                  </button>
+                )}
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Video Call Iframe - Separate Section with Increased Size */}
+      {appointment?.url && showVideoCall && (
+        <div className="mt-6">
+          <h4 className="text-md font-semibold text-gray-800 mb-3">Live Video Consultation</h4>
+          <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm">
+            <iframe
+              src={appointment.url}
+              className="w-full h-screen max-h-[800px] min-h-[600px] border border-gray-200 rounded-lg"
+              allow="camera; microphone; fullscreen; speaker; display-capture"
+              title="Video Call"
+              frameBorder="0"
+            ></iframe>
           </div>
         </div>
       )}

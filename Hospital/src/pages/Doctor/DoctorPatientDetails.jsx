@@ -12,6 +12,7 @@ const DoctorPatientDetails = () => {
   const [patientId, setPatientId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [finishingAppointment, setFinishingAppointment] = useState(false);
 
   // Navigation and Location
   const navigate = useNavigate();
@@ -140,6 +141,43 @@ const DoctorPatientDetails = () => {
     }
   };
 
+  // New function to finish appointment
+  const finishAppointment = async () => {
+    try {
+      setFinishingAppointment(true);
+
+      const response = await fetch(`${API_BASE_URL}/doctor/updateAppoinmentStatus`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          aid: aid,
+          status: "completed"
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success === true || result.success === "true") {
+        console.log("✅ Appointment finished successfully");
+        // Navigate back to queue after successful update
+        handleViewFullProfile();
+      } else {
+        throw new Error(result.message || "Failed to update appointment status");
+      }
+
+    } catch (error) {
+      console.error("❌ Error finishing appointment:", error);
+      alert(`Failed to finish appointment: ${error.message}`);
+    } finally {
+      setFinishingAppointment(false);
+    }
+  };
+
   // Event Handlers
   const handleAddPrescription = () => {
     const appointmentId = appointmentData?.appointment?.aid || appointmentData?.aid;
@@ -163,7 +201,7 @@ const DoctorPatientDetails = () => {
   };
 
   const handleViewFullProfile = () => {
-    alert(`Viewing full patient profile for Patient ID: ${patientId}`);
+    // Removed the alert message - directly navigate back to queue
     handleBackToQueue();
   };
 
@@ -322,8 +360,23 @@ const DoctorPatientDetails = () => {
           </div>
         </div>
 
-        {/* Bottom Action Button */}
-        <div className="mt-10 text-center">
+        {/* Bottom Action Buttons */}
+        <div className="mt-10 text-center space-x-4">
+          <button
+            className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-3 rounded-3xl font-semibold text-lg shadow-lg hover:from-green-700 hover:to-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={finishAppointment}
+            disabled={finishingAppointment}
+          >
+            {finishingAppointment ? (
+              <>
+                <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                Finishing...
+              </>
+            ) : (
+              'Finish Appointment'
+            )}
+          </button>
+          
           <button
             className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-3 rounded-3xl font-semibold text-lg shadow-lg hover:from-indigo-700 hover:to-blue-700 transition"
             onClick={handleViewFullProfile}
