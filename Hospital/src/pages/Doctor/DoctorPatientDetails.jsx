@@ -21,146 +21,193 @@ const DoctorPatientDetails = () => {
   // API Configuration
   const API_BASE_URL = "http://localhost:8080";
 
+  // CONSOLE LOGS FOR DEBUGGING AID
+  console.log("=== DOCTOR PATIENT DETAILS DEBUG ===");
+  console.log("Component mounted/rendered");
+  console.log("aid from location.state:", aid);
+  console.log("patient from location.state:", patient);
+  console.log("Full location.state:", location.state);
+  console.log("location object:", location);
+  console.log("Current pathname:", location.pathname);
+  console.log("Current search:", location.search);
+  console.log("=====================================");
+
   // Effects
   useEffect(() => {
+    console.log("=== USEEFFECT DEBUG ===");
+    console.log("useEffect triggered with aid:", aid);
+    console.log("aid type:", typeof aid);
+    console.log("aid truthy?", !!aid);
+    
     if (!aid) {
+      console.error("❌ No appointment ID provided");
+      console.log("Setting error and navigating back...");
       setError("No appointment ID provided");
       setTimeout(() => navigate("/doctor/today-que"), 2000);
       return;
     }
+    
+    console.log("✅ Aid exists, calling fetchAppointmentData");
     fetchAppointmentData();
   }, [aid, navigate]);
 
   useEffect(() => {
     if (appointmentData && patientId) {
-      console.log("State Updated:", { patientId, appointmentId: appointmentData.aid });
+      console.log("State Updated:", { patientId, appointmentId: appointmentData.appointment?.aid || appointmentData.aid });
     }
   }, [appointmentData, patientId]);
 
   // API Functions
   const fetchAppointmentData = async () => {
-  try {
-    setLoading(true);
-    setError(null);
-
-    console.log("Fetching appointment data for aid:", aid);
-
-    const response = await fetch(`${API_BASE_URL}/doctor/getAppoinment`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ aid }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    console.log("Full API Response:", result);
-
-    // Handle the response structure correctly
-    if (result.success === true || result.success === "true") {
-      if (result.data) {
-        console.log("Setting appointment data:", result.data);
-        
-        // Set the entire result.data object which contains appointment, patient, and user
-        setAppointmentData(result.data);
-        
-        // Extract patient ID from the correct location
-        const extractedPatientId = result.data.patient?.pid || 
-                                 result.data.user?.uid ||
-                                 result.data.appointment?.pid;
-        
-        console.log("Extracted patient ID:", extractedPatientId);
-        setPatientId(extractedPatientId);
-        
-        if (!extractedPatientId) {
-          console.warn("No patient ID found in response");
-        }
-      } else {
-        console.warn("API response successful but no data provided");
-        // Fallback logic remains the same...
-        if (patient) {
-          console.log("Using fallback patient data:", patient);
-          setAppointmentData({
-            appointment: { aid: aid, pid: patient.user?.uid || patient.patientId, status: patient.status || 'pending' },
-            patient: patient.patient || {},
-            user: patient.user || {}
-          });
-          setPatientId(patient.user?.uid || patient.patientId);
-        } else {
-          throw new Error("No appointment data available");
-        }
-      }
-    } else {
-      // Error handling remains the same...
-      const message = result.message || "Unknown error occurred";
-      console.log("API response message:", message);
-      
-      if (message.toLowerCase().includes("success") || 
-          message.toLowerCase().includes("found")) {
-        console.log("Treating as success despite success:false");
-        
-        if (result.data) {
-          setAppointmentData(result.data);
-          setPatientId(result.data.patient?.pid || result.data.user?.uid);
-        } else if (patient) {
-          setAppointmentData({
-            appointment: { aid: aid, pid: patient.user?.uid || patient.patientId, status: patient.status || 'pending' },
-            patient: patient.patient || {},
-            user: patient.user || {}
-          });
-          setPatientId(patient.user?.uid || patient.patientId);
-        }
-      } else {
-        throw new Error(message);
-      }
-    }
-  } catch (error) {
-    console.error("Error fetching appointment:", error);
-    setError(`Failed to fetch appointment data: ${error.message}`);
-    
-    // Emergency fallback remains the same...
-    if (patient && !appointmentData) {
-      console.log("Using emergency fallback patient data");
-      setAppointmentData({
-        appointment: { aid: aid, pid: patient.user?.uid || patient.patientId, status: patient.status || 'pending' },
-        patient: patient.patient || {},
-        user: patient.user || {}
-      });
-      setPatientId(patient.user?.uid || patient.patientId);
+    try {
+      setLoading(true);
       setError(null);
+
+      console.log("=== FETCH APPOINTMENT DATA ===");
+      console.log("🔄 Fetching appointment data for aid:", aid);
+      console.log("aid value:", aid);
+      console.log("aid type:", typeof aid);
+      console.log("Request URL:", `${API_BASE_URL}/doctor/getAppoinment`);
+      console.log("Request body:", JSON.stringify({ aid }));
+
+      const response = await fetch(`${API_BASE_URL}/doctor/getAppoinment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ aid }),
+      });
+
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+
+      if (!response.ok) {
+        console.error("❌ Response not ok, status:", response.status);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("✅ Full API Response:", result);
+
+      // Handle the response structure correctly
+      if (result.success === true || result.success === "true") {
+        if (result.data) {
+          console.log("✅ Setting appointment data:", result.data);
+          
+          // Set the entire result.data object which contains appointment, patient, and user
+          setAppointmentData(result.data);
+          
+          // Extract patient ID from the correct location
+          const extractedPatientId = result.data.patient?.pid || 
+                                   result.data.user?.uid ||
+                                   result.data.appointment?.pid;
+          
+          console.log("Extracted patient ID:", extractedPatientId);
+          setPatientId(extractedPatientId);
+          
+          if (!extractedPatientId) {
+            console.warn("⚠️ No patient ID found in response");
+          }
+        } else {
+          console.warn("⚠️ API response successful but no data provided");
+          // Fallback logic remains the same...
+          if (patient) {
+            console.log("Using fallback patient data:", patient);
+            setAppointmentData({
+              appointment: { aid: aid, pid: patient.user?.uid || patient.patientId, status: patient.status || 'pending' },
+              patient: patient.patient || {},
+              user: patient.user || {}
+            });
+            setPatientId(patient.user?.uid || patient.patientId);
+          } else {
+            throw new Error("No appointment data available");
+          }
+        }
+      } else {
+        // Error handling remains the same...
+        const message = result.message || "Unknown error occurred";
+        console.log("API response message:", message);
+        
+        if (message.toLowerCase().includes("success") || 
+            message.toLowerCase().includes("found")) {
+          console.log("Treating as success despite success:false");
+          
+          if (result.data) {
+            setAppointmentData(result.data);
+            setPatientId(result.data.patient?.pid || result.data.user?.uid);
+          } else if (patient) {
+            setAppointmentData({
+              appointment: { aid: aid, pid: patient.user?.uid || patient.patientId, status: patient.status || 'pending' },
+              patient: patient.patient || {},
+              user: patient.user || {}
+            });
+            setPatientId(patient.user?.uid || patient.patientId);
+          }
+        } else {
+          throw new Error(message);
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error fetching appointment:", error);
+      console.error("Error details:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      setError(`Failed to fetch appointment data: ${error.message}`);
+      
+      // Emergency fallback remains the same...
+      if (patient && !appointmentData) {
+        console.log("🔄 Using emergency fallback patient data");
+        setAppointmentData({
+          appointment: { aid: aid, pid: patient.user?.uid || patient.patientId, status: patient.status || 'pending' },
+          patient: patient.patient || {},
+          user: patient.user || {}
+        });
+        setPatientId(patient.user?.uid || patient.patientId);
+        setError(null);
+      }
+    } finally {
+      setLoading(false);
+      console.log("=== FETCH COMPLETE ===");
     }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Event Handlers
   const handleAddPrescription = () => {
-    if (!patientId || !appointmentData?.aid) {
+    console.log("=== ADD PRESCRIPTION ===");
+    console.log("patientId:", patientId);
+    console.log("appointmentData?.appointment?.aid:", appointmentData?.appointment?.aid);
+    console.log("appointmentData?.aid:", appointmentData?.aid);
+    
+    const appointmentId = appointmentData?.appointment?.aid || appointmentData?.aid;
+    
+    if (!patientId || !appointmentId) {
+      console.error("❌ Missing patient or appointment information");
+      console.log("patientId:", patientId, "appointmentId:", appointmentId);
       alert("Missing patient or appointment information");
       return;
     }
 
+    console.log("✅ Navigating to add prescription with:", { patientId, appointmentId });
     navigate("/doctor/add-prescription", {
       state: {
         patientId: patientId,
-        appointmentId: appointmentData.aid,
+        appointmentId: appointmentId,
       },
     });
   };
 
   const handleBackToQueue = () => {
+    console.log("🔄 Navigating back to queue");
     navigate("/doctor/today-que");
   };
 
   const handleViewFullProfile = () => {
+    console.log("=== VIEW FULL PROFILE ===");
     console.log("View Full Profile:", {
       patientId,
-      doctorId: appointmentData?.did,
-      appointmentId: appointmentData?.aid,
+      doctorId: appointmentData?.appointment?.did || appointmentData?.did,
+      appointmentId: appointmentData?.appointment?.aid || appointmentData?.aid,
     });
     alert(`Viewing full patient profile for Patient ID: ${patientId}`);
     handleBackToQueue();
@@ -197,12 +244,16 @@ const DoctorPatientDetails = () => {
           {patient && (
             <button
               onClick={() => {
-                // Try to proceed with fallback data
+                console.log("🔄 Using fallback data button clicked");
+                // Try to proceed with fallback data - FIXED structure
                 setAppointmentData({
-                  aid: aid,
-                  pid: patient.user?.uid || patient.patientId,
-                  status: patient.status || 'pending',
-                  patient: patient
+                  appointment: {
+                    aid: aid,
+                    pid: patient.user?.uid || patient.patientId,
+                    status: patient.status || 'pending'
+                  },
+                  patient: patient.patient || {},
+                  user: patient.user || {}
                 });
                 setPatientId(patient.user?.uid || patient.patientId);
                 setError(null);
@@ -240,23 +291,28 @@ const DoctorPatientDetails = () => {
   );
 
   // Patient Info Card
-  const PatientInfoCard = () => (
-    <div className="mb-6 bg-white rounded-lg shadow-md p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <span className="text-sm text-gray-500">Patient ID:</span>
-          <span className="ml-2 text-lg font-semibold text-blue-600">{patientId}</span>
+  const PatientInfoCard = () => {
+    const appointmentId = appointmentData?.appointment?.aid || appointmentData?.aid;
+    const status = appointmentData?.appointment?.status || appointmentData?.status;
+    
+    return (
+      <div className="mb-6 bg-white rounded-lg shadow-md p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-sm text-gray-500">Patient ID:</span>
+            <span className="ml-2 text-lg font-semibold text-blue-600">{patientId}</span>
+          </div>
+          <div className="text-sm text-gray-500">
+            Appointment: {appointmentId} | Status: {status}
+          </div>
         </div>
-        <div className="text-sm text-gray-500">
-          Appointment: {appointmentData?.aid} | Status: {appointmentData?.status}
+        {/* Debug info - remove in production */}
+        <div className="mt-2 text-xs text-gray-400">
+          Debug: aid={aid}, hasAppointmentData={!!appointmentData}, hasPatientFallback={!!patient}
         </div>
       </div>
-      {/* Debug info - remove in production */}
-      <div className="mt-2 text-xs text-gray-400">
-        Debug: aid={aid}, hasAppointmentData={!!appointmentData}, hasPatientFallback={!!patient}
-      </div>
-    </div>
-  );
+    );
+  };
 
   // Main Render Logic
   if (loading) return <LoadingComponent />;
@@ -295,7 +351,7 @@ const DoctorPatientDetails = () => {
                   <MedicalReportsTab
                     appointmentData={appointmentData}
                     patientId={patientId}
-                    reports={appointmentData?.reports}
+                    reports={appointmentData?.appointment?.reports || appointmentData?.reports}
                     fallbackPatient={patient}
                   />
                 )}

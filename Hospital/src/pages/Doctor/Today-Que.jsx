@@ -13,6 +13,7 @@ const TodayQue = () => {
   const [loading, setLoading] = useState(true);
   const [singlePatientLoading, setSinglePatientLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [currentTimeSlot, setCurrentTimeSlot] = useState("morning");
 
   // Helper function to format date to YYYY-MM-DD
   const formatDate = (date) => {
@@ -21,6 +22,35 @@ const TodayQue = () => {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
+  // Helper function to determine current time slot
+  const getCurrentTimeSlot = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    
+    // You can adjust these time ranges based on your clinic's schedule
+    if (hour >= 3 && hour < 12) {
+      return "morning";
+    } else {
+      return "evening";
+    }
+  };
+
+  // Update current time slot when component mounts and every minute
+  useEffect(() => {
+    const updateTimeSlot = () => {
+      const timeSlot = getCurrentTimeSlot();
+      setCurrentTimeSlot(timeSlot);
+    };
+
+    // Update immediately
+    updateTimeSlot();
+
+    // Update every minute to keep it current
+    const interval = setInterval(updateTimeSlot, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Helper function to map API status to display status
   const mapApiStatusToDisplay = (apiStatus) => {
@@ -92,19 +122,25 @@ const TodayQue = () => {
     }
   };
 
-  // Original queue fetching function
+  // Original queue fetching function with dynamic time
   useEffect(() => {
     const fetchPatients = async () => {
       try {
         setLoading(true);
         const formattedDate = formatDate(date);
+        const timeSlot = getCurrentTimeSlot(); // Get current time slot
+        
+        console.log(`Fetching queue for date: ${formattedDate}, time: ${timeSlot}`);
         
         const response = await fetch("http://localhost:8080/doctor/getQueue", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ date: formattedDate, time: "morning" }),
+          body: JSON.stringify({ 
+            date: formattedDate, 
+            time: timeSlot // Use dynamic time slot
+          }),
           credentials: "include",
         });
 
@@ -153,7 +189,12 @@ const TodayQue = () => {
     };
 
     fetchPatients();
-  }, [date]);
+  }, [date, currentTimeSlot]); // Add currentTimeSlot as dependency
+
+  // Manual time slot selector (optional - for testing or manual override)
+  const handleTimeSlotChange = (timeSlot) => {
+    setCurrentTimeSlot(timeSlot);
+  };
 
   // Update filtering to work with both original API status and display status
   const filteredPatients = activeFilter === "all"
@@ -188,11 +229,46 @@ const TodayQue = () => {
           {Array.isArray(patients)
             ? patients.filter((p) => p.status === "waiting").length
             : 0}{" "}
-          patients waiting today.
+          patients waiting today ({currentTimeSlot} session).
         </p>
       </div>
 
-    
+      {/* Time Slot Indicator and Manual Selector */}
+      <div className="mb-6 bg-white rounded-lg shadow-md p-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+          <div className="mb-3 sm:mb-0">
+            <h3 className="text-lg font-semibold text-teal-900">Current Session</h3>
+            <p className="text-teal-700 capitalize">
+              {currentTimeSlot} Session - {new Date().toLocaleTimeString()}
+            </p>
+          </div>
+          
+          {/* Manual Time Slot Selector */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleTimeSlotChange("morning")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                currentTimeSlot === "morning"
+                  ? "bg-teal-600 text-white"
+                  : "bg-teal-100 text-teal-700 hover:bg-teal-200"
+              }`}
+            >
+              Morning
+            </button>
+            
+            <button
+              onClick={() => handleTimeSlotChange("evening")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                currentTimeSlot === "evening"
+                  ? "bg-teal-600 text-white"
+                  : "bg-teal-100 text-teal-700 hover:bg-teal-200"
+              }`}
+            >
+              Evening
+            </button>
+          </div>
+        </div>
+      </div>
 
       <PatientFilters
         activeFilter={activeFilter}
@@ -213,7 +289,7 @@ const TodayQue = () => {
 
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-teal-900 mb-4">
-          Today's Queue
+          Today's Queue - {currentTimeSlot.charAt(0).toUpperCase() + currentTimeSlot.slice(1)} Session
         </h2>
         {filteredPatients.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -228,7 +304,7 @@ const TodayQue = () => {
           <div className="text-center py-8">
             <p className="text-teal-700 text-lg">
               {patients.length === 0 
-                ? "No patients scheduled for this date." 
+                ? `No patients scheduled for ${currentTimeSlot} session on this date.` 
                 : "No patients found for this filter."}
             </p>
           </div>

@@ -184,12 +184,7 @@ const PatientCard = ({ patient }) => {
         </div>
 
         <div className="mt-4 flex justify-between">
-          <button 
-            onClick={handleNotes}
-            className="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg hover:bg-teal-200 transition-colors flex items-center gap-2"
-          >
-            <FaNotesMedical /> Notes
-          </button>
+          
           <button
             onClick={handleViewReports}
             className="px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg hover:opacity-90 transition-opacity"

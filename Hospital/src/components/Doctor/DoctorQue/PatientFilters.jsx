@@ -15,51 +15,7 @@ const PatientFilters = ({ activeFilter, setActiveFilter }) => {
       </div>
 
       {/* Filter Buttons */}
-      <div className="flex flex-wrap gap-2 w-full md:w-auto">
-        <button
-          onClick={() => setActiveFilter("all")}
-          className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${
-            activeFilter === "all"
-              ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg"
-              : "bg-white text-teal-700 border border-teal-200"
-          }`}
-        >
-          <FaFilter className="text-sm" /> All Patients
-        </button>
-
-        <button
-          onClick={() => setActiveFilter("waiting")}
-          className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${
-            activeFilter === "waiting"
-              ? "bg-gradient-to-r from-amber-500 to-orange-400 text-white shadow-lg"
-              : "bg-white text-amber-700 border border-amber-200"
-          }`}
-        >
-          <div className="w-3 h-3 rounded-full bg-amber-500"></div> Waiting
-        </button>
-
-        <button
-          onClick={() => setActiveFilter("in-progress")}
-          className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${
-            activeFilter === "in-progress"
-              ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"
-              : "bg-white text-blue-700 border border-blue-200"
-          }`}
-        >
-          <div className="w-3 h-3 rounded-full bg-blue-500"></div> In Progress
-        </button>
-
-        <button
-          onClick={() => setActiveFilter("completed")}
-          className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${
-            activeFilter === "completed"
-              ? "bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg"
-              : "bg-white text-emerald-700 border border-emerald-200"
-          }`}
-        >
-          <div className="w-3 h-3 rounded-full bg-emerald-500"></div> Completed
-        </button>
-      </div>
+      
     </div>
   );
 };
