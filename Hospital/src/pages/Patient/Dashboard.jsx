@@ -5,7 +5,7 @@ import { Calendar, Video, Clock, User, Pill, Package, CheckCircle, Plus, ArrowRi
 // NOTE: Your sub-components (AppointmentCard, CompletedAppointmentCard, etc.) do not need any changes.
 
 // Enhanced Appointment Card Component
-const AppointmentCard = ({ doctor, time, date, type = "Online", url="https://meet.jit.si/h" }) => {
+const AppointmentCard = ({ doctor, time, date, type = "Online", url = "https://meet.jit.si/h" }) => {
   const doctorName = doctor.name;
   const specialty = doctor.specialization;
   const navigate = useNavigate();
@@ -58,17 +58,15 @@ const AppointmentCard = ({ doctor, time, date, type = "Online", url="https://mee
 const CompletedAppointmentCard = ({ appointment, onClick, isActive, onNavigateToPrescription }) => (
   <div
     onClick={onClick}
-    className={`group cursor-pointer rounded-2xl p-5 transition-all duration-300 transform hover:-translate-y-1 ${
-      isActive
+    className={`group cursor-pointer rounded-2xl p-5 transition-all duration-300 transform hover:-translate-y-1 ${isActive
         ? 'bg-gradient-to-br from-blue-50 to-purple-50 ring-2 ring-blue-500 shadow-lg'
         : 'bg-white hover:bg-gray-50 shadow-md hover:shadow-lg border border-gray-100'
-    }`}
+      }`}
   >
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-4">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-          isActive ? 'bg-gradient-to-br from-blue-500 to-purple-600' : 'bg-gray-100 group-hover:bg-blue-100'
-        } transition-all duration-200`}>
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isActive ? 'bg-gradient-to-br from-blue-500 to-purple-600' : 'bg-gray-100 group-hover:bg-blue-100'
+          } transition-all duration-200`}>
           <CheckCircle className={`w-6 h-6 ${isActive ? 'text-white' : 'text-gray-600 group-hover:text-blue-600'}`} />
         </div>
         <div>
@@ -77,10 +75,10 @@ const CompletedAppointmentCard = ({ appointment, onClick, isActive, onNavigateTo
         </div>
       </div>
       {appointment.prescriptionId && (
-        <button 
+        <button
           onClick={(e) => {
             e.stopPropagation();
-            onNavigateToPrescription(appointment.prescriptionId); 
+            onNavigateToPrescription(appointment.prescriptionId);
           }}
           className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg">
           View Prescription
@@ -97,23 +95,21 @@ const CompletedAppointmentCard = ({ appointment, onClick, isActive, onNavigateTo
 const PrescriptionCard = ({ prescription, isActive, onClick }) => (
   <div
     onClick={onClick}
-    className={`group cursor-pointer rounded-2xl p-5 transition-all duration-300 transform hover:-translate-y-1 ${
-      isActive
+    className={`group cursor-pointer rounded-2xl p-5 transition-all duration-300 transform hover:-translate-y-1 ${isActive
         ? 'bg-gradient-to-br from-green-50 to-blue-50 ring-2 ring-green-500 shadow-lg'
         : 'bg-white hover:bg-gray-50 shadow-md hover:shadow-lg border border-gray-100'
-    }`}
+      }`}
   >
     <div className="flex items-center space-x-4">
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-        isActive ? 'bg-gradient-to-br from-green-500 to-blue-600' : 'bg-green-100 group-hover:bg-green-200'
-      } transition-all duration-200`}>
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isActive ? 'bg-gradient-to-br from-green-500 to-blue-600' : 'bg-green-100 group-hover:bg-green-200'
+        } transition-all duration-200`}>
         <Pill className={`w-6 h-6 ${isActive ? 'text-white' : 'text-green-600'}`} />
       </div>
       <div className="flex-1">
         <h4 className="font-semibold text-gray-800">{prescription.pharmacy.name}</h4>
         <p className="text-sm text-gray-500 flex items-center">
           <Truck className="w-4 h-4 mr-1" />
-           Status: {prescription.status}
+          Status: {prescription.status}
         </p>
       </div>
       <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-300'} transition-colors`}></div>
@@ -123,42 +119,40 @@ const PrescriptionCard = ({ prescription, isActive, onClick }) => (
 
 // Enhanced Delivery Progress Component
 const DeliveryProgress = ({ prescription }) => {
-    // This is a simplified static mapping. A real app might get this from the prescription object itself.
-    const getSteps = (status) => {
-        const baseSteps = [
-            { name: 'Order Confirmed', icon: '📝', completed: false },
-            { name: 'Order Packed', icon: '📦', completed: false },
-            { name: 'Shipped', icon: '🚚', completed: false },
-            { name: 'Delivered', icon: '✅', completed: false },
-        ];
+  // This is a simplified static mapping. A real app might get this from the prescription object itself.
+  const getSteps = (status) => {
+    const baseSteps = [
+      { name: 'Order Confirmed', icon: '📝', completed: false },
+      { name: 'Order Packed', icon: '📦', completed: false },
+      { name: 'Shipped', icon: '🚚', completed: false },
+      { name: 'Delivered', icon: '✅', completed: false },
+    ];
 
-        if (!status) return baseSteps;
+    if (!status) return baseSteps;
 
-        if (status.toLowerCase().includes('confirmed')) {
-            baseSteps[0].completed = true;
-        }
-        if (status.toLowerCase().includes('packed')) {
-            baseSteps[0].completed = true;
-            baseSteps[1].completed = true;
-        }
-        // Add more status checks as needed
-        
-        return baseSteps;
-    };
-    
-    const steps = prescription ? getSteps(prescription.status) : [];
+    if (status.toLowerCase().includes('confirmed')) {
+      baseSteps[0].completed = true;
+    }
+    if (status.toLowerCase().includes('packed')) {
+      baseSteps[0].completed = true;
+      baseSteps[1].completed = true;
+    }
+    // Add more status checks as needed
+
+    return baseSteps;
+  };
+
+  const steps = prescription ? getSteps(prescription.status) : [];
 
   return (
     // ... JSX for delivery progress remains the same
     <div className="space-y-4">
       {steps.length > 0 && prescription ? (
         steps.map((step, index) => (
-          <div key={index} className={`relative flex items-center space-x-4 rounded-2xl p-4 transition-all duration-200 ${
-            step.completed ? 'bg-gradient-to-r from-green-50 to-blue-50' : 'bg-gray-50'
-          }`}>
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg shadow-md ${
-              step.completed ? 'bg-gradient-to-br from-green-400 to-blue-500' : 'bg-gray-200'
+          <div key={index} className={`relative flex items-center space-x-4 rounded-2xl p-4 transition-all duration-200 ${step.completed ? 'bg-gradient-to-r from-green-50 to-blue-50' : 'bg-gray-50'
             }`}>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg shadow-md ${step.completed ? 'bg-gradient-to-br from-green-400 to-blue-500' : 'bg-gray-200'
+              }`}>
               <span className={step.completed ? 'filter drop-shadow-sm' : ''}>{step.icon}</span>
             </div>
             <div className="flex-grow">
@@ -216,7 +210,7 @@ const Dashboard = () => {
 
           // 1. --- Filter for the "Prescriptions & Delivery" section ---
           // Shows only prescriptions that have been paid for and confirmed.
-          const paidList = fetchedPrescriptions.filter(p => 
+          const paidList = fetchedPrescriptions.filter(p =>
             p.diliveryMethod === 'paid' && p.status === 'order confirmed'
           );
           // console.log(recentList);
@@ -263,24 +257,24 @@ const Dashboard = () => {
       {/* Header and Quick Stats sections remain the same */}
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white">
         <div className="container mx-auto px-6 py-8">
-            <h1 className="text-4xl font-bold mb-2">Welcome back, Eshan!</h1>
+          <h1 className="text-4xl font-bold mb-2">Welcome back, Eshan!</h1>
         </div>
       </div>
 
       <div className="container mx-auto px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-2xl p-6 shadow-lg">
-                <p>Upcoming</p><p className="text-3xl font-bold">{upcomingAppointments.length}</p><p>Appointments</p>
-            </div>
-            <div className="bg-gradient-to-br from-green-500 to-teal-600 text-white rounded-2xl p-6 shadow-lg">
-                <p>Active</p><p className="text-3xl font-bold">{paidPrescriptions.length}</p><p>Prescriptions</p>
-            </div>
-            <div className="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-2xl p-6 shadow-lg">
-                <p>Pending</p><p className="text-3xl font-bold">{completedAppointments.length}</p><p>Prescriptions</p>
-            </div>
-             <div className="bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-2xl p-6 shadow-lg">
-                <p>Health</p><p className="text-3xl font-bold">98%</p><p>Score</p>
-            </div>
+          <div className="bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-2xl p-6 shadow-lg">
+            <p>Upcoming</p><p className="text-3xl font-bold">{upcomingAppointments.length}</p><p>Appointments</p>
+          </div>
+          <div className="bg-gradient-to-br from-green-500 to-teal-600 text-white rounded-2xl p-6 shadow-lg">
+            <p>Prescription</p><p className="text-3xl font-bold">{paidPrescriptions.length}</p><p>Prescriptions</p>
+          </div>
+          <div className="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-2xl p-6 shadow-lg">
+            <p>Delivery</p><p className="text-3xl font-bold">{completedAppointments.length}</p><p>Prescriptions</p>
+          </div>
+          <div className="bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-2xl p-6 shadow-lg">
+            <p>Completed Appointment</p><p className="text-3xl font-bold">5</p><p>Score</p>
+          </div>
         </div>
 
         {/* Appointments Section */}
