@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Bell, 
-  User, 
-  Menu, 
-  X, 
-  Heart, 
-  Shield, 
-  LogOut 
+import {
+  Bell,
+  User,
+  Menu,
+  X,
+  Heart,
+  Shield,
+  LogOut
 } from 'lucide-react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -24,7 +24,7 @@ const Header = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-    
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -35,18 +35,18 @@ const Header = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login'); 
+    navigate('/login');
   };
 
   if (isLoading) {
-    return <div className="h-20"></div>; 
+    return <div className="h-20"></div>;
   }
 
   return (
     <>
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-white/95 backdrop-blur-lg shadow-xl border-b border-gray-200/50' 
+        isScrolled
+          ? 'bg-white/95 backdrop-blur-lg shadow-xl border-b border-gray-200/50'
           : 'bg-white/80 backdrop-blur-sm shadow-lg border-b border-gray-100/30'
       }`}>
         <div className="container mx-auto px-6 py-4">
@@ -70,7 +70,6 @@ const Header = () => {
                 Home
               </NavLink>
               
-              {/* MODIFICATION 1: Hide Dashboard link if not authenticated (Desktop) */}
               {isAuthenticated && (
                 <NavLink to="/dashboard" className={({ isActive }) => `relative font-semibold transition-all duration-300 py-2 px-4 rounded-xl ${ isActive ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:text-blue-600 hover:bg-gray-50" }`}>
                   Dashboard
@@ -92,16 +91,27 @@ const Header = () => {
             <div className="flex items-center space-x-4">
               {isAuthenticated ? (
                 <>
-                  {/* ... Logged in user dropdown menu ... */}
                   <button className="relative p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200">
                     <Bell className="w-5 h-5" />
                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center text-xs text-white font-bold">3</span>
                   </button>
                   <div className="group relative">
                     <button className="flex items-center space-x-2 p-2 rounded-xl hover:bg-gray-50 transition-all duration-200">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center">
-                        <User className="w-5 h-5 text-white" />
-                      </div>
+                      
+                      {/* MODIFICATION START: Display profile picture or fallback icon */}
+                      {user?.profilepic ? (
+                        <img
+                          src={user.profilepic}
+                          alt="Profile"
+                          className="w-10 h-10 rounded-xl object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center">
+                          <User className="w-5 h-5 text-white" />
+                        </div>
+                      )}
+                      {/* MODIFICATION END */}
+
                       <span className="hidden md:block font-medium text-gray-700">{user?.username || 'User'}</span>
                     </button>
                     <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
@@ -119,7 +129,7 @@ const Header = () => {
                           <span className="text-sm text-gray-700">Account Settings</span>
                         </Link>
                         <div className="h-px bg-gray-100 my-2"></div>
-                        <button 
+                        <button
                           onClick={handleLogout}
                           className="w-full text-left flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-red-50 text-red-600 transition-colors"
                         >
@@ -159,7 +169,6 @@ const Header = () => {
             <nav className="container mx-auto px-6 py-4 space-y-2">
               <NavLink to="/" end className={({ isActive }) => `block font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${isActive ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"}`} onClick={() => setIsMobileMenuOpen(false)}>Home</NavLink>
               
-              {/* MODIFICATION 2: Hide Dashboard link if not authenticated (Mobile) */}
               {isAuthenticated && (
                 <NavLink to="/dashboard" className={({ isActive }) => `block font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${isActive ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"}`} onClick={() => setIsMobileMenuOpen(false)}>Dashboard</NavLink>
               )}

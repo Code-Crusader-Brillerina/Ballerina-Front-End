@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import VideoCallComponent from "../../components/Doctor/DoctorVideoConference/VideoCallComponent";
 
-const VideoCall = () => {
+const DoctorVideoConference = () => {
   const [micOn, setMicOn] = useState(true);
   const [cameraOn, setCameraOn] = useState(true);
   const [callDuration, setCallDuration] = useState(0);
@@ -36,4 +36,4 @@ const VideoCall = () => {
   );
 };
 
-export default VideoCall;
+export default DoctorVideoConference;

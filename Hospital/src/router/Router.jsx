@@ -49,6 +49,13 @@ import PharmacyNotification from "../pages/Pharmacy/PharmacyNotification";
 
 // Helper component for protected routes
 import PrivateRoute from "../components/PrivateRoute";
+import DoctorDashboard from "../pages/Doctor/DoctorDashboard";
+import TodayQue from "../pages/Doctor/Today-Que";
+import DoctorAppointment from "../pages/Doctor/DoctorAppointment";
+import DoctorNotification from "../pages/Doctor/DoctorNotification";
+import DoctorPatientDetails from "../pages/Doctor/DoctorPatientDetails";
+import DoctorVideoConference from "../pages/Doctor/DoctorVideoConference";
+import DoctorAddPrescription from "../pages/Doctor/PrescriptionPage";
 
 const router = createBrowserRouter([
     // ==========================================
