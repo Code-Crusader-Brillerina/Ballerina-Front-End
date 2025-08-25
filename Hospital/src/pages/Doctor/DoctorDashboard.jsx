@@ -53,6 +53,19 @@ const DoctorDashboard = () => {
     return today.toISOString().split('T')[0];
   };
 
+  // Function to get current time slot
+  const getCurrentTimeSlot = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    
+    // You can adjust these time ranges based on your clinic's schedule
+    if (hour >= 3 && hour < 12) {
+      return "morning";
+    } else {
+      return "evening";
+    }
+  };
+
   // Function to get day name
   const getDayName = (date) => {
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -199,7 +212,7 @@ const DoctorDashboard = () => {
         headers: headers,
         body: JSON.stringify({ 
           date: getTodayDate(),
-          time: "morning"
+          time: getCurrentTimeSlot()
         }),
         credentials: "include",
       });

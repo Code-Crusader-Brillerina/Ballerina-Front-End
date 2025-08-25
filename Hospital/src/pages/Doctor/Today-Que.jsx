@@ -52,10 +52,11 @@ const TodayQue = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Helper function to map API status to display status
+  // Helper function to map API status to display status (UPDATED for new structure)
   const mapApiStatusToDisplay = (apiStatus) => {
     switch(apiStatus) {
       case 'pending': return 'waiting';
+      case 'scheduled': return 'waiting'; // NEW: Handle 'scheduled' status
       case 'in-progress': return 'in-progress';
       case 'completed': return 'completed';
       default: return 'waiting';
@@ -81,7 +82,6 @@ const TodayQue = () => {
       }
 
       const apiData = await response.json();
-      console.log("Single Patient API Response:", apiData);
 
       if (apiData.success && apiData.data) {
         // Transform the single patient data using same pattern
@@ -98,17 +98,16 @@ const TodayQue = () => {
           image: apiData.data.user?.profilepic || "https://via.placeholder.com/64x64/20B2AA/FFFFFF?text=Patient",
           university: apiData.data.user?.email || 'No email',
           
-          // Additional patient-specific data from the 'partient' object
-          pid: apiData.data.partient?.pid || 'No PID',
-          dateOfBirth: apiData.data.partient?.DOB || 'No DOB',
-          gender: apiData.data.partient?.gender || 'Unknown',
+          // Additional patient-specific data from the 'patient' object (note: it was 'partient' in your old code)
+          pid: apiData.data.patient?.pid || 'No PID',
+          dateOfBirth: apiData.data.patient?.DOB || 'No DOB',
+          gender: apiData.data.patient?.gender || 'Unknown',
           
           // Keep original nested structure for reference
           user: apiData.data.user,
-          partient: apiData.data.partient
+          patient: apiData.data.patient
         };
 
-        console.log("Transformed single patient:", transformedPatient);
         setSinglePatient(transformedPatient);
       } else {
         throw new Error(apiData.message || 'Failed to fetch patient data');
@@ -122,15 +121,13 @@ const TodayQue = () => {
     }
   };
 
-  // Original queue fetching function with dynamic time
+  // Updated queue fetching function for new data structure
   useEffect(() => {
     const fetchPatients = async () => {
       try {
         setLoading(true);
         const formattedDate = formatDate(date);
         const timeSlot = getCurrentTimeSlot(); // Get current time slot
-        
-        console.log(`Fetching queue for date: ${formattedDate}, time: ${timeSlot}`);
         
         const response = await fetch("http://localhost:8080/doctor/getQueue", {
           method: "POST",
@@ -149,12 +146,11 @@ const TodayQue = () => {
         }
 
         const apiData = await response.json();
-        console.log("Queue API Response:", apiData);
 
         // Ensure we have data and it's an array
         const patientList = Array.isArray(apiData.data) ? apiData.data : [];
         
-        // Transform the data to match what the component expects
+        // Transform the data to match what the component expects (UPDATED for new structure)
         const transformedPatients = patientList.map(item => ({
           // Flatten the structure and add computed properties
           ...item,
@@ -166,18 +162,17 @@ const TodayQue = () => {
           patientId: item.user?.uid || 'No ID',
           image: item.user?.profilepic || "https://via.placeholder.com/64x64/20B2AA/FFFFFF?text=Patient",
           university: item.user?.email || 'No email',
-          // Map appointment data
-          time: item.queData?.time || 'No time set',
-          status: mapApiStatusToDisplay(item.queData?.status),
+          // Map appointment data (UPDATED: use appointment instead of queData)
+          time: item.appointment?.time || 'No time set',
+          status: mapApiStatusToDisplay(item.appointment?.status),
+          appointmentId: item.appointment?.aid, // NEW: Direct access to appointment ID
           // Keep original nested structure for navigation
-          queData: item.queData,
-          user: item.user
+          appointment: item.appointment, // NEW: appointment data
+          patient: item.patient, // NEW: patient data
+          user: item.user,
+          // Keep queData for backward compatibility if it exists
+          queData: item.queData
         }));
-        
-        // Debug log to check transformed data structure
-        if (transformedPatients.length > 0) {
-          console.log("First transformed queue patient:", transformedPatients[0]);
-        }
         
         setPatients(transformedPatients);
       } catch (error) {
@@ -295,7 +290,7 @@ const TodayQue = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredPatients.map((patient, index) => (
               <PatientCard 
-                key={patient.queData?.aid || patient.user?.uid || index} 
+                key={patient.appointment?.aid || patient.user?.uid || index} 
                 patient={patient} 
               />
             ))}
