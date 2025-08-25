@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaUserInjured } from "react-icons/fa";
+import { FaUserInjured, FaUser, FaRedo } from "react-icons/fa";
 import CalendarSection from "../../components/Doctor/DoctorQue/CalendarSection";
 import StatsSection from "../../components/Doctor/DoctorQue/StatsSection";
 import PatientFilters from "../../components/Doctor/DoctorQue/PatientFilters";
@@ -9,7 +9,10 @@ const TodayQue = () => {
   const [date, setDate] = useState(new Date());
   const [activeFilter, setActiveFilter] = useState("all");
   const [patients, setPatients] = useState([]);
+  const [singlePatient, setSinglePatient] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [singlePatientLoading, setSinglePatientLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Helper function to format date to YYYY-MM-DD
   const formatDate = (date) => {
@@ -29,6 +32,67 @@ const TodayQue = () => {
     }
   };
 
+  // Function to fetch single patient data
+  const fetchSinglePatient = async () => {
+    try {
+      setSinglePatientLoading(true);
+      setError(null);
+      
+      const response = await fetch("http://localhost:8080/patient/getPatient", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const apiData = await response.json();
+      console.log("Single Patient API Response:", apiData);
+
+      if (apiData.success && apiData.data) {
+        // Transform the single patient data using same pattern
+        const transformedPatient = {
+          // Spread the original item
+          ...apiData.data,
+          
+          // Map user data for easier access
+          name: apiData.data.user?.username || 'Unknown Patient',
+          username: apiData.data.user?.username || 'Unknown',
+          phoneNumber: apiData.data.user?.phoneNumber || 'No phone',
+          address: `${apiData.data.user?.city || 'Unknown city'}, ${apiData.data.user?.district || 'Unknown district'}`,
+          patientId: apiData.data.user?.uid || 'No ID',
+          image: apiData.data.user?.profilepic || "https://via.placeholder.com/64x64/20B2AA/FFFFFF?text=Patient",
+          university: apiData.data.user?.email || 'No email',
+          
+          // Additional patient-specific data from the 'partient' object
+          pid: apiData.data.partient?.pid || 'No PID',
+          dateOfBirth: apiData.data.partient?.DOB || 'No DOB',
+          gender: apiData.data.partient?.gender || 'Unknown',
+          
+          // Keep original nested structure for reference
+          user: apiData.data.user,
+          partient: apiData.data.partient
+        };
+
+        console.log("Transformed single patient:", transformedPatient);
+        setSinglePatient(transformedPatient);
+      } else {
+        throw new Error(apiData.message || 'Failed to fetch patient data');
+      }
+    } catch (error) {
+      console.error("Error fetching single patient data:", error);
+      setError(error.message);
+      setSinglePatient(null);
+    } finally {
+      setSinglePatientLoading(false);
+    }
+  };
+
+  // Original queue fetching function
   useEffect(() => {
     const fetchPatients = async () => {
       try {
@@ -40,7 +104,7 @@ const TodayQue = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ date: formattedDate }),
+          body: JSON.stringify({ date: formattedDate, time: "morning" }),
           credentials: "include",
         });
 
@@ -49,34 +113,56 @@ const TodayQue = () => {
         }
 
         const apiData = await response.json();
-        console.log("API Response:", apiData);
+        console.log("Queue API Response:", apiData);
 
         // Ensure we have data and it's an array
         const patientList = Array.isArray(apiData.data) ? apiData.data : [];
         
         // Transform the data to match what the component expects
-        const transformedPatients = patientList.map(item => ({
-          // Flatten the structure and add computed properties
-          ...item,
-          // Map user data for easier access
-          name: item.user?.username || 'Unknown Patient',
-          username: item.user?.username || 'Unknown',
-          phoneNumber: item.user?.phoneNumber || 'No phone',
-          address: `${item.user?.city || 'Unknown city'}, ${item.user?.district || 'Unknown district'}`,
-          patientId: item.user?.uid || 'No ID',
-          image: item.user?.profilepic || "https://via.placeholder.com/64x64/20B2AA/FFFFFF?text=Patient",
-          university: item.user?.email || 'No email',
-          // Map appointment data
-          time: item.queData?.time || 'No time set',
-          status: mapApiStatusToDisplay(item.queData?.status),
-          // Keep original nested structure for navigation
-          queData: item.queData,
-          user: item.user
-        }));
+        const transformedPatients = patientList.map((item, index) => {
+          // Create appointment ID from available data
+          const appointmentId = item.queData?.aid || 
+                               item.queData?.appointmentId || 
+                               item.queData?.id ||
+                               item.aid ||
+                               item.appointmentId ||
+                               item.id ||
+                               item.user?.uid ||
+                               `temp_id_${index}`;
+
+          console.log(`Patient ${index} - appointmentId: ${appointmentId}`, item);
+
+          return {
+            // Flatten the structure and add computed properties
+            ...item,
+            // Add explicit appointment ID
+            appointmentId: appointmentId,
+            // Map user data for easier access
+            name: item.user?.username || 'Unknown Patient',
+            username: item.user?.username || 'Unknown',
+            phoneNumber: item.user?.phoneNumber || 'No phone',
+            address: `${item.user?.city || 'Unknown city'}, ${item.user?.district || 'Unknown district'}`,
+            patientId: item.user?.uid || 'No ID',
+            image: item.user?.profilepic || "https://via.placeholder.com/64x64/20B2AA/FFFFFF?text=Patient",
+            university: item.user?.email || 'No email',
+            // Map appointment data
+            time: item.queData?.time || 'No time set',
+            status: mapApiStatusToDisplay(item.queData?.status),
+            // Ensure queData exists even if null from API
+            queData: item.queData || {
+              aid: appointmentId,
+              status: 'pending',
+              time: 'No time set'
+            },
+            // Keep original nested structure for navigation
+            user: item.user
+          };
+        });
         
         // Debug log to check transformed data structure
         if (transformedPatients.length > 0) {
-          console.log("First transformed patient:", transformedPatients[0]);
+          console.log("First transformed queue patient:", transformedPatients[0]);
+          console.log("First patient queData:", transformedPatients[0].queData);
         }
         
         setPatients(transformedPatients);
@@ -147,13 +233,13 @@ const TodayQue = () => {
 
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-teal-900 mb-4">
-          Today's Patients
+          Today's Queue
         </h2>
         {filteredPatients.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredPatients.map((patient, index) => (
               <PatientCard 
-                key={patient.queData?.aid || patient.user?.uid || index} 
+                key={patient.appointmentId || patient.queData?.aid || patient.user?.uid || index} 
                 patient={patient} 
               />
             ))}
@@ -168,8 +254,6 @@ const TodayQue = () => {
           </div>
         )}
       </div>
-
-      
     </div>
   );
 };

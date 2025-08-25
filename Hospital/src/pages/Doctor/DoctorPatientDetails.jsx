@@ -16,7 +16,7 @@ const DoctorPatientDetails = () => {
   // Navigation and Location
   const navigate = useNavigate();
   const location = useLocation();
-  const { aid } = location.state || {};
+  const { aid, patient } = location.state || {};
 
   // API Configuration
   const API_BASE_URL = "http://localhost:8080";
@@ -43,6 +43,8 @@ const DoctorPatientDetails = () => {
       setLoading(true);
       setError(null);
 
+      console.log("Fetching appointment data for aid:", aid);
+
       const response = await fetch(`${API_BASE_URL}/doctor/getAppoinment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,16 +57,89 @@ const DoctorPatientDetails = () => {
       }
 
       const result = await response.json();
+      console.log("Full API Response:", result);
 
-      if (result.success && result.data) {
-        setAppointmentData(result.data);
-        setPatientId(result.data.pid);
+      // Handle different response structures
+      if (result.success === true || result.success === "true") {
+        // Check if we have data
+        if (result.data) {
+          console.log("Setting appointment data:", result.data);
+          setAppointmentData(result.data);
+          
+          // Extract patient ID from various possible locations
+          const extractedPatientId = result.data.pid || 
+                                   result.data.patientId || 
+                                   result.data.patient?.id ||
+                                   result.data.patient?.pid ||
+                                   patient?.user?.uid ||
+                                   patient?.patientId;
+          
+          console.log("Extracted patient ID:", extractedPatientId);
+          setPatientId(extractedPatientId);
+          
+          if (!extractedPatientId) {
+            console.warn("No patient ID found in response");
+          }
+        } else {
+          console.warn("API response successful but no data provided");
+          // If we have patient data from the previous page, use it as fallback
+          if (patient) {
+            console.log("Using fallback patient data:", patient);
+            setAppointmentData({
+              aid: aid,
+              pid: patient.user?.uid || patient.patientId,
+              status: patient.status || 'pending',
+              // Add other fields as needed
+            });
+            setPatientId(patient.user?.uid || patient.patientId);
+          } else {
+            throw new Error("No appointment data available");
+          }
+        }
       } else {
-        throw new Error(result.message || "Failed to fetch appointment data");
+        // Handle cases where success is false but message might be informational
+        const message = result.message || "Unknown error occurred";
+        console.log("API response message:", message);
+        
+        // Check if this is actually an error or just an informational message
+        if (message.toLowerCase().includes("success") || 
+            message.toLowerCase().includes("found")) {
+          // This might be a success message misformatted as error
+          console.log("Treating as success despite success:false");
+          
+          // Try to extract data anyway
+          if (result.data) {
+            setAppointmentData(result.data);
+            setPatientId(result.data.pid || result.data.patientId);
+          } else if (patient) {
+            // Use fallback data
+            setAppointmentData({
+              aid: aid,
+              pid: patient.user?.uid || patient.patientId,
+              status: patient.status || 'pending',
+            });
+            setPatientId(patient.user?.uid || patient.patientId);
+          }
+        } else {
+          throw new Error(message);
+        }
       }
     } catch (error) {
       console.error("Error fetching appointment:", error);
       setError(`Failed to fetch appointment data: ${error.message}`);
+      
+      // As a last resort, try to use the patient data passed from previous page
+      if (patient && !appointmentData) {
+        console.log("Using emergency fallback patient data");
+        setAppointmentData({
+          aid: aid,
+          pid: patient.user?.uid || patient.patientId,
+          status: patient.status || 'pending',
+          patient: patient
+        });
+        setPatientId(patient.user?.uid || patient.patientId);
+        setError(null); // Clear error since we have fallback data
+      }
     } finally {
       setLoading(false);
     }
@@ -105,6 +180,7 @@ const DoctorPatientDetails = () => {
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
         <p className="text-gray-600">Loading patient data...</p>
+        <p className="text-sm text-gray-500 mt-2">Appointment ID: {aid}</p>
       </div>
     </div>
   );
@@ -115,12 +191,36 @@ const DoctorPatientDetails = () => {
       <div className="text-center bg-white rounded-lg shadow-md p-8">
         <div className="text-red-500 text-xl mb-4">⚠️ Error</div>
         <p className="text-gray-700 mb-4">{error}</p>
-        <button
-          onClick={handleBackToQueue}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-        >
-          Back to Queue
-        </button>
+        <div className="text-sm text-gray-500 mb-4">
+          <p>Appointment ID: {aid}</p>
+          {patient && <p>Fallback patient data available</p>}
+        </div>
+        <div className="space-x-4">
+          <button
+            onClick={handleBackToQueue}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Back to Queue
+          </button>
+          {patient && (
+            <button
+              onClick={() => {
+                // Try to proceed with fallback data
+                setAppointmentData({
+                  aid: aid,
+                  pid: patient.user?.uid || patient.patientId,
+                  status: patient.status || 'pending',
+                  patient: patient
+                });
+                setPatientId(patient.user?.uid || patient.patientId);
+                setError(null);
+              }}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+            >
+              Use Available Data
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -159,28 +259,28 @@ const DoctorPatientDetails = () => {
           Appointment: {appointmentData?.aid} | Status: {appointmentData?.status}
         </div>
       </div>
+      {/* Debug info - remove in production */}
+      <div className="mt-2 text-xs text-gray-400">
+        Debug: aid={aid}, hasAppointmentData={!!appointmentData}, hasPatientFallback={!!patient}
+      </div>
     </div>
   );
 
   // Main Render Logic
   if (loading) return <LoadingComponent />;
-  if (error) return <ErrorComponent />;
+  if (error && !appointmentData) return <ErrorComponent />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-indigo-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Back Button */}
-        <div className="mb-4">
-          <button
-            onClick={handleBackToQueue}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2"
-          >
-            ← Back to Queue
-          </button>
-        </div>
+        
 
         {/* Patient Header */}
-        <PatientHeader appointmentData={appointmentData} patientId={patientId} />
+        <PatientHeader 
+          appointmentData={appointmentData} 
+          patientId={patientId}
+          fallbackPatient={patient}
+        />
 
         {/* Patient Info Card */}
         {patientId && <PatientInfoCard />}
@@ -193,13 +293,18 @@ const DoctorPatientDetails = () => {
               <TabNavigation />
               <div className="p-6">
                 {activeTab === "details" && (
-                  <PatientDetailsTab appointmentData={appointmentData} patientId={patientId} />
+                  <PatientDetailsTab 
+                    appointmentData={appointmentData} 
+                    patientId={patientId}
+                    fallbackPatient={patient}
+                  />
                 )}
                 {activeTab === "reports" && (
                   <MedicalReportsTab
                     appointmentData={appointmentData}
                     patientId={patientId}
                     reports={appointmentData?.reports}
+                    fallbackPatient={patient}
                   />
                 )}
               </div>
@@ -222,7 +327,7 @@ const DoctorPatientDetails = () => {
             className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-3 rounded-3xl font-semibold text-lg shadow-lg hover:from-indigo-700 hover:to-blue-700 transition"
             onClick={handleViewFullProfile}
           >
-            View Queue Profile
+            Back to Queue
           </button>
         </div>
       </div>

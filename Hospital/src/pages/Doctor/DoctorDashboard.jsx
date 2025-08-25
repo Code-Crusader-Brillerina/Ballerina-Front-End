@@ -59,6 +59,47 @@ const DoctorDashboard = () => {
     return days[date.getDay()];
   };
 
+  // Function to format date for display
+  const formatDateOfBirth = (dobString) => {
+    if (!dobString) return "N/A";
+    
+    try {
+      const date = new Date(dobString);
+      if (isNaN(date.getTime())) return "N/A";
+      
+      // Format as MM/DD/YYYY or DD/MM/YYYY based on your preference
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    } catch {
+      return "N/A";
+    }
+  };
+
+  // Function to calculate age from DOB
+  const calculateAge = (dobString) => {
+    if (!dobString) return "N/A";
+    
+    try {
+      const dob = new Date(dobString);
+      if (isNaN(dob.getTime())) return "N/A";
+      
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const monthDiff = today.getMonth() - dob.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+      }
+      
+      return age.toString();
+    } catch {
+      return "N/A";
+    }
+  };
+
   // Function to get auth headers
   const getAuthHeaders = () => {
     const token =
@@ -157,7 +198,8 @@ const DoctorDashboard = () => {
         method: "POST",
         headers: headers,
         body: JSON.stringify({ 
-          date: getTodayDate() 
+          date: getTodayDate(),
+          time: "morning"
         }),
         credentials: "include",
       });
@@ -181,17 +223,32 @@ const DoctorDashboard = () => {
       console.error("Error fetching queue data:", err);
       setQueueError(err.message);
 
-      // Fallback queue data
+      // Fallback queue data for demonstration
       const fallbackQueue = [
-        { id: 1, name: "John Doe", gender: "Male", age: 28, color: "blue", time: "9:00 AM" },
-        { id: 2, name: "Jane Smith", gender: "Female", age: 34, color: "green", time: "9:30 AM" },
-        { id: 3, name: "Mike Johnson", gender: "Male", age: 45, color: "red", time: "10:00 AM" },
+        {
+          id: 1,
+          patientName: "John Doe",
+          dateOfBirth: "1990-05-15",
+          gender: "Male",
+          appointmentTime: "09:00 AM"
+        }
       ];
       
       setDashboardData(prev => ({
         ...prev,
         patientsInQueue: fallbackQueue.length,
-        todaysQueue: fallbackQueue,
+        todaysQueue: fallbackQueue.map((patient, index) => {
+          const colors = ["blue", "green", "red", "yellow", "purple", "orange"];
+          return {
+            id: patient.id,
+            name: patient.patientName,
+            dob: formatDateOfBirth(patient.dateOfBirth),
+            age: calculateAge(patient.dateOfBirth),
+            gender: patient.gender,
+            color: colors[index % colors.length],
+            time: patient.appointmentTime,
+          };
+        }),
       }));
     } finally {
       setQueueLoading(false);
@@ -235,7 +292,7 @@ const DoctorDashboard = () => {
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const oneWeekAgo = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000); // Changed to 6 days ago to include today
+    const oneWeekAgo = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000);
 
     const todayAppointments = appointmentsData.filter((appointment) => {
       const dateString =
@@ -335,27 +392,77 @@ const DoctorDashboard = () => {
       queueArray = [];
     }
 
-    const todaysQueue = queueArray.slice(0, 6).map((patient, index) => {
+    const todaysQueue = queueArray.slice(0, 6).map((item, index) => {
       const colors = ["blue", "green", "red", "yellow", "purple", "orange"];
+      
+      // Extract data from nested structure
+      const appointment = item.appointment || {};
+      const patient = item.patient || {};
+      const user = item.user || {};
+      
+      // Handle DOB - your API uses "DOB" in patient object with format "YYYY.MM.DD"
+      const dobString = patient.DOB || 
+                       patient.dateOfBirth || 
+                       patient.dob || 
+                       patient.birth_date || 
+                       patient.birthDate ||
+                       patient.patient_dob ||
+                       patient.date_of_birth;
+
+      // Convert DOB format from "YYYY.MM.DD" to standard date format
+      const formatDobForCalculation = (dob) => {
+        if (!dob) return null;
+        if (dob.includes('.')) {
+          return dob.replace(/\./g, '-'); // Convert "2003.05.19" to "2003-05-19"
+        }
+        return dob;
+      };
+
+      const standardDob = formatDobForCalculation(dobString);
+
+      // Extract name - prioritize user.username, then create fallback
+      const patientName = user.username || 
+                         patient.patientName ||
+                         patient.name ||
+                         patient.patient_name ||
+                         (patient.firstName ? `${patient.firstName} ${patient.lastName || ''}`.trim() : '') ||
+                         `Patient ${index + 1}`;
+
+      // Calculate age from DOB
+      const calculatedAge = standardDob ? calculateAge(standardDob) : (patient.age || patient.patient_age || "N/A");
+
+      // Extract appointment time and format it
+      const appointmentTime = appointment.time || 
+                             patient.appointmentTime ||
+                             patient.time ||
+                             patient.scheduled_time ||
+                             patient.queueTime ||
+                             "N/A";
+
+      // Format time for display
+      const formatTime = (timeStr) => {
+        if (!timeStr || timeStr === "N/A") return "N/A";
+        if (timeStr === "morning") return "Morning Session";
+        if (timeStr === "evening") return "Evening Session";
+        return timeStr;
+      };
+
       return {
-        id: patient.id || patient._id || patient.patientId || index + 1,
-        name:
-          patient.patientName ||
-          patient.name ||
-          patient.patient_name ||
-          patient.firstName + " " + (patient.lastName || "") ||
-          `Patient ${index + 1}`,
+        id: appointment.aid || patient.pid || user.uid || index + 1,
+        name: patientName,
+        dob: formatDateOfBirth(standardDob),
+        age: calculatedAge,
         gender: patient.gender || patient.sex || "N/A",
-        age: patient.age || patient.patient_age || "N/A",
         color: colors[index % colors.length],
-        time:
-          patient.appointmentTime ||
-          patient.time ||
-          patient.scheduled_time ||
-          patient.queueTime ||
-          "N/A",
+        time: formatTime(appointmentTime),
+        appointmentNumber: appointment.number || index + 1,
+        status: appointment.status || "pending",
+        email: user.email || "N/A",
+        phone: user.phoneNumber || "N/A",
       };
     });
+
+    console.log("Processed queue data:", todaysQueue);
 
     setDashboardData(prev => ({
       ...prev,
@@ -505,23 +612,63 @@ const DoctorDashboard = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {dashboardData.todaysQueue.length > 0 ? (
             dashboardData.todaysQueue.map(
-              ({ id, name, gender, age, color, time }) => (
-                <MetricCard
-                  key={id}
-                  icon={null}
-                  title={name}
-                  value={`${gender}, Age: ${age}`}
-                  percentage={time && time !== "N/A" ? `Time: ${time}` : ""}
-                  color={color}
-                />
+              ({ id, name, dob, gender, age, color, time, appointmentNumber, status, email, phone }) => (
+                <div key={id} className={`bg-white rounded-lg shadow-md p-4 border-l-4 border-${color}-500 hover:shadow-lg transition-shadow`}>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-lg font-semibold text-gray-800">{name}</h4>
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                          status === 'completed' ? 'bg-green-100 text-green-800' : 
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          #{appointmentNumber}
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-sm text-gray-600">
+                        <div className="flex justify-between">
+                          <span className="font-medium">DOB:</span>
+                          <span>{dob}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Age:</span>
+                          <span>{age}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Gender:</span>
+                          <span className="capitalize">{gender}</span>
+                        </div>
+                        {time && time !== "N/A" && (
+                          <div className="flex justify-between">
+                            <span className="font-medium">Session:</span>
+                            <span className="text-blue-600 font-medium">{time}</span>
+                          </div>
+                        )}
+                        {email && email !== "N/A" && (
+                          <div className="flex justify-between">
+                            <span className="font-medium">Email:</span>
+                            <span className="text-xs text-gray-500 truncate" title={email}>{email}</span>
+                          </div>
+                        )}
+                        {phone && phone !== "N/A" && (
+                          <div className="flex justify-between">
+                            <span className="font-medium">Phone:</span>
+                            <span className="text-xs text-gray-500">{phone}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )
             )
           ) : (
             <div className="col-span-3 text-center text-gray-500 py-8">
-              {queueLoading ? "Loading queue data..." : "No patients in queue today"}
+              {queueLoading ? "Loading queue data..." : queueError ? "Unable to load queue data" : "No patients in queue today"}
             </div>
           )}
         </div>
