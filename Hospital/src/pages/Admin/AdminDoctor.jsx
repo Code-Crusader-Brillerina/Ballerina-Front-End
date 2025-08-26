@@ -17,7 +17,7 @@ const AdminDoctor = () => {
       setError(null);
       setLoading(true);
       
-      const response = await fetch('http://localhost:8080/patient/getAllDoctors', {
+      const response = await fetch('http://localhost:8080/admin/getAllDoctors', {
         method: 'GET',
         credentials: 'include', // Include cookies for JWT authentication
         headers: {
@@ -61,12 +61,63 @@ const AdminDoctor = () => {
     setIsModalOpen(false);
   };
 
+  const handleDeleteDoctor = async (doctorId) => {
+    // Show confirmation dialog
+    const confirmed = window.confirm('Are you sure you want to delete this doctor?');
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+      
+      const response = await fetch('http://localhost:8080/admin/deleteDoctor', {
+        method: 'DELETE',
+        credentials: 'include', // Include cookies for JWT authentication
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ did: doctorId })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Remove the doctor from the local state
+        setDoctorsData(prevData => prevData.filter(doctor => doctor.did !== doctorId));
+        console.log('Doctor deleted successfully:', doctorId);
+        
+        // Show success message (you can replace with a toast notification)
+        alert('Doctor deleted successfully!');
+        
+        // If we're on a page with no items after deletion, go to previous page
+        const updatedDoctors = doctorsData.filter(doctor => doctor.did !== doctorId);
+        const newTotalPages = Math.ceil(updatedDoctors.length / itemsPerPage);
+        if (currentPage > newTotalPages && newTotalPages > 0) {
+          setCurrentPage(newTotalPages);
+        }
+      } else {
+        throw new Error(result.message || 'Failed to delete doctor');
+      }
+    } catch (err) {
+      console.error('Error deleting doctor:', err);
+      setError(err.message);
+      alert('Failed to delete doctor. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredDoctors = useMemo(() => {
     if (!searchTerm) return doctorsData;
     return doctorsData.filter(doctor =>
-      doctor.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.email.toLowerCase().includes(searchTerm.toLowerCase())
+      doctor.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.specialization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.licenseNomber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.experience?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [searchTerm, doctorsData]);
 
@@ -149,23 +200,29 @@ const AdminDoctor = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Revenue Generated</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License Number</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Experience</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {currentDoctors.length > 0 ? (
               currentDoctors.map((doctor, index) => (
-                <tr key={doctor.id || index}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{doctor.username}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.email}</td>
+                <tr key={doctor.did || index}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{doctor.username || doctor.did}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.email || 'N/A'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.specialization}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-left">{doctor.revenue || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.licenseNomber || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.experience || 'N/A'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-blue-600 hover:text-blue-900 mr-2">
+                    <button className="text-blue-600 hover:text-blue-900 mr-2" title="Edit Doctor">
                       <FaEdit className="inline-block h-4 w-4" />
                     </button>
-                    <button className="text-red-600 hover:text-red-900">
+                    <button 
+                      className="text-red-600 hover:text-red-900"
+                      onClick={() => handleDeleteDoctor(doctor.did)}
+                      title="Delete Doctor"
+                    >
                       <FaTrashAlt className="inline-block h-4 w-4" />
                     </button>
                   </td>
@@ -173,7 +230,7 @@ const AdminDoctor = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
                   No doctors found
                 </td>
               </tr>

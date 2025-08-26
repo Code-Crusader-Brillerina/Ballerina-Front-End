@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+import { Edit, Trash2 } from 'lucide-react';
 
 const AdminPatient = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -9,7 +9,7 @@ const AdminPatient = () => {
   const [error, setError] = useState(null);
   const itemsPerPage = 8;
 
-  // Fixed function - moved inside component and corrected variable names
+  // Fetch patients from API
   const fetchPatients = async () => {
     try {
       setError(null);
@@ -31,7 +31,7 @@ const AdminPatient = () => {
       const result = await response.json();
       
       if (result.success && result.data) {
-        setPatientsData(result.data); // Fixed: use setPatientsData instead of setDoctorsData
+        setPatientsData(result.data);
         console.log('Patients loaded successfully:', result.data);
       } else {
         throw new Error(result.message || 'Failed to fetch patients data');
@@ -55,9 +55,10 @@ const AdminPatient = () => {
   const filteredPatients = useMemo(() => {
     if (!searchTerm) return patientsData;
     return patientsData.filter(patient =>
-      patient.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+      patient.userData?.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.userData?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.userData?.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.pid?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [searchTerm, patientsData]);
 
@@ -71,6 +72,18 @@ const AdminPatient = () => {
     if (pageNumber > 0 && pageNumber <= totalPages) {
       setCurrentPage(pageNumber);
     }
+  };
+
+  const handleDelete = (patient) => {
+    if (window.confirm(`Are you sure you want to delete patient ${patient.userData?.username}?`)) {
+      // Add your delete API call here
+      console.log('Delete patient:', patient);
+    }
+  };
+
+  const handleEdit = (patient) => {
+    // Add your edit logic here
+    console.log('Edit patient:', patient);
   };
 
   // Loading state
@@ -135,11 +148,24 @@ const AdminPatient = () => {
         </div>
       </div>
 
+      {/* Statistics */}
+      <div className="mb-6">
+        <div className="text-sm text-gray-600">
+          Total Patients: <span className="font-semibold">{patientsData.length}</span>
+          {searchTerm && (
+            <span> | Filtered: <span className="font-semibold">{filteredPatients.length}</span></span>
+          )}
+        </div>
+      </div>
+
       {/* Patient List Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Patient ID
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Name
               </th>
@@ -149,6 +175,15 @@ const AdminPatient = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Phone
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Gender
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                DOB
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                City
+              </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
@@ -157,35 +192,43 @@ const AdminPatient = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {currentPatients.length > 0 ? (
               currentPatients.map((patient, index) => (
-                <tr key={patient.id || index}>
+                <tr key={patient.pid || index} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                    {patient.pid || 'N/A'}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {patient.name || 'N/A'}
+                    {patient.userData?.username || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {patient.email || 'N/A'}
+                    {patient.userData?.email || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {patient.phone || 'N/A'}
+                    {patient.userData?.phoneNumber || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
+                    {patient.gender || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {patient.DOB || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
+                    {patient.userData?.city || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
                       <button 
-                        className="text-blue-600 hover:text-blue-900"
-                        onClick={() => {
-                          // Add your edit logic here
-                          console.log('Edit patient:', patient);
-                        }}
+                        className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
+                        onClick={() => handleEdit(patient)}
+                        title="Edit patient"
                       >
-                        <FaEdit className="inline-block h-4 w-4" />
+                        <Edit className="h-4 w-4" />
                       </button>
                       <button 
-                        className="text-red-600 hover:text-red-900"
-                        onClick={() => {
-                          // Add your delete logic here
-                          console.log('Delete patient:', patient);
-                        }}
+                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
+                        onClick={() => handleDelete(patient)}
+                        title="Delete patient"
                       >
-                        <FaTrashAlt className="inline-block h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </td>
@@ -193,8 +236,8 @@ const AdminPatient = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
-                  No patients found
+                <td colSpan="8" className="px-6 py-8 text-center text-sm text-gray-500">
+                  {searchTerm ? 'No patients found matching your search' : 'No patients found'}
                 </td>
               </tr>
             )}
