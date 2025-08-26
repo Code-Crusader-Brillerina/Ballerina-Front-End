@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Search, X } from 'lucide-react';
 
 const AdminPatient = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -7,6 +7,7 @@ const AdminPatient = () => {
   const [patientsData, setPatientsData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [searchFilter, setSearchFilter] = useState('all'); // 'all', 'name', 'email', 'phone', 'id'
   const itemsPerPage = 8;
 
   // Fetch patients from API
@@ -17,13 +18,12 @@ const AdminPatient = () => {
       
       const response = await fetch('http://localhost:8080/admin/getAllPatient', {
         method: 'GET',
-        credentials: 'include', // Include cookies for JWT authentication
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
       });
       
-      // Check if response is ok
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -47,20 +47,37 @@ const AdminPatient = () => {
     }
   };
 
-  // Load patients on component mount
   useEffect(() => {
     fetchPatients();
   }, []);
 
+  // Enhanced filtering based on search filter selection
   const filteredPatients = useMemo(() => {
     if (!searchTerm) return patientsData;
-    return patientsData.filter(patient =>
-      patient.userData?.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.userData?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.userData?.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.pid?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [searchTerm, patientsData]);
+    
+    const term = searchTerm.toLowerCase();
+    
+    return patientsData.filter(patient => {
+      switch (searchFilter) {
+        case 'name':
+          return patient.userData?.username?.toLowerCase().includes(term);
+        case 'email':
+          return patient.userData?.email?.toLowerCase().includes(term);
+        case 'phone':
+          return patient.userData?.phoneNumber?.toLowerCase().includes(term);
+        case 'id':
+          return patient.pid?.toLowerCase().includes(term);
+        case 'all':
+        default:
+          return (
+            patient.userData?.username?.toLowerCase().includes(term) ||
+            patient.userData?.email?.toLowerCase().includes(term) ||
+            patient.userData?.phoneNumber?.toLowerCase().includes(term) ||
+            patient.pid?.toLowerCase().includes(term)
+          );
+      }
+    });
+  }, [searchTerm, patientsData, searchFilter]);
 
   const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
   const currentPatients = useMemo(() => {
@@ -76,14 +93,22 @@ const AdminPatient = () => {
 
   const handleDelete = (patient) => {
     if (window.confirm(`Are you sure you want to delete patient ${patient.userData?.username}?`)) {
-      // Add your delete API call here
       console.log('Delete patient:', patient);
     }
   };
 
   const handleEdit = (patient) => {
-    // Add your edit logic here
     console.log('Edit patient:', patient);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
+
+  const handleSearchFilterChange = (filter) => {
+    setSearchFilter(filter);
+    setCurrentPage(1);
   };
 
   // Loading state
@@ -125,35 +150,87 @@ const AdminPatient = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-8">
-      {/* Header, Search, and Add Patient Button */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 space-y-4 md:space-y-0">
         <h1 className="text-3xl font-bold text-gray-800">Patient Management</h1>
-        <div className="flex items-center space-x-4">
-          <input
-            type="text"
-            placeholder="Search patients..."
-            className="px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <button
-            className="bg-blue-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
-            onClick={() => {
-              // Add your add patient logic here
-              console.log('Add patient clicked');
-            }}
-          >
-            + Add Patient
-          </button>
+        <button
+          className="bg-blue-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+          onClick={() => console.log('Add patient clicked')}
+        >
+          + Add Patient
+        </button>
+      </div>
+
+      {/* Enhanced Search Section */}
+      <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+          {/* Search Filter Buttons */}
+          <div className="flex flex-wrap gap-2">
+            <span className="text-sm font-medium text-gray-700 self-center mr-2">Search by:</span>
+            {[
+              { key: 'all', label: 'All Fields' },
+              { key: 'name', label: 'Name' },
+              { key: 'email', label: 'Email' },
+              { key: 'phone', label: 'Phone' },
+              { key: 'id', label: 'Patient ID' }
+            ].map((filter) => (
+              <button
+                key={filter.key}
+                onClick={() => handleSearchFilterChange(filter.key)}
+                className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                  searchFilter === filter.key
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Search Input */}
+          <div className="relative flex-grow max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder={`Search patients by ${searchFilter === 'all' ? 'any field' : searchFilter}...`}
+              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-gray-600"
+              >
+                <X className="h-4 w-4 text-gray-400" />
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Search Results Summary */}
+        {searchTerm && (
+          <div className="mt-3 text-sm text-gray-600">
+            <span className="font-medium">
+              {filteredPatients.length} patient{filteredPatients.length !== 1 ? 's' : ''} found
+            </span>
+            {' '}matching "{searchTerm}" in {searchFilter === 'all' ? 'all fields' : searchFilter}
+          </div>
+        )}
       </div>
 
       {/* Statistics */}
       <div className="mb-6">
         <div className="text-sm text-gray-600">
-          Total Patients: <span className="font-semibold">{patientsData.length}</span>
+          Total Patients: <span className="font-semibold text-blue-600">{patientsData.length}</span>
           {searchTerm && (
-            <span> | Filtered: <span className="font-semibold">{filteredPatients.length}</span></span>
+            <span> | Showing: <span className="font-semibold text-green-600">{filteredPatients.length}</span></span>
           )}
         </div>
       </div>
@@ -192,7 +269,7 @@ const AdminPatient = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {currentPatients.length > 0 ? (
               currentPatients.map((patient, index) => (
-                <tr key={patient.pid || index} className="hover:bg-gray-50">
+                <tr key={patient.pid || index} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
                     {patient.pid || 'N/A'}
                   </td>
@@ -217,14 +294,14 @@ const AdminPatient = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
                       <button 
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
+                        className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors"
                         onClick={() => handleEdit(patient)}
                         title="Edit patient"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button 
-                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
+                        className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
                         onClick={() => handleDelete(patient)}
                         title="Delete patient"
                       >
@@ -236,8 +313,21 @@ const AdminPatient = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="px-6 py-8 text-center text-sm text-gray-500">
-                  {searchTerm ? 'No patients found matching your search' : 'No patients found'}
+                <td colSpan="8" className="px-6 py-12 text-center">
+                  <div className="text-gray-500">
+                    {searchTerm ? (
+                      <div>
+                        <Search className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                        <p className="text-lg font-medium">No patients found</p>
+                        <p className="text-sm">Try adjusting your search terms or filters</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-lg font-medium">No patients found</p>
+                        <p className="text-sm">Add your first patient to get started</p>
+                      </div>
+                    )}
+                  </div>
                 </td>
               </tr>
             )}
@@ -251,27 +341,40 @@ const AdminPatient = () => {
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Previous
           </button>
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i + 1}
-              onClick={() => handlePageChange(i + 1)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                currentPage === i + 1
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
+          {[...Array(Math.min(totalPages, 7))].map((_, i) => {
+            let pageNumber;
+            if (totalPages <= 7) {
+              pageNumber = i + 1;
+            } else if (currentPage <= 4) {
+              pageNumber = i + 1;
+            } else if (currentPage >= totalPages - 3) {
+              pageNumber = totalPages - 6 + i;
+            } else {
+              pageNumber = currentPage - 3 + i;
+            }
+
+            return (
+              <button
+                key={pageNumber}
+                onClick={() => handlePageChange(pageNumber)}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                  currentPage === pageNumber
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                }`}
+              >
+                {pageNumber}
+              </button>
+            );
+          })}
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Next
           </button>
