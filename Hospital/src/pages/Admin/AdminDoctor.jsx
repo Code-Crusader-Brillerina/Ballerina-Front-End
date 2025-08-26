@@ -110,14 +110,11 @@ const AdminDoctor = () => {
     }
   };
 
+  // Updated search filter to only search by doctor name (username)
   const filteredDoctors = useMemo(() => {
     if (!searchTerm) return doctorsData;
     return doctorsData.filter(doctor =>
-      doctor.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.specialization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.licenseNomber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.experience?.toLowerCase().includes(searchTerm.toLowerCase())
+      doctor.username?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [searchTerm, doctorsData]);
 
@@ -178,7 +175,7 @@ const AdminDoctor = () => {
         <div className="flex items-center space-x-4">
           <input
             type="text"
-            placeholder="Search doctors..."
+            placeholder="Search by doctor name..."
             className="px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
