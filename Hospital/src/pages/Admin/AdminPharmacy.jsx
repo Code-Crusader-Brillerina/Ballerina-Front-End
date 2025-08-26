@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { FaEdit, FaTrashAlt, FaUser } from 'react-icons/fa';
-import AddPharmacyModal from '../../components/Admin/AdminPharmacy/AddPharmacyModal';
+// import AddPharmacyModal from '../../components/Admin/AdminPharmacy/AddPharmacyModal';
 
 const AdminPharmacy = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -202,13 +202,20 @@ const AdminPharmacy = () => {
     // For example, open a modal with pre-filled data
   };
 
+  // Updated filtering logic to handle the correct data structure
   const filteredPharmacies = useMemo(() => {
     if (!searchTerm) return pharmaciesData;
-    return pharmaciesData.filter(pharmacy =>
-      pharmacy.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pharmacy.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pharmacy.contactNomber?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return pharmaciesData.filter(pharmacy => {
+      const pharmacyName = pharmacy.name || pharmacy.pharmacyName || '';
+      const email = pharmacy.email || pharmacy.userData?.email || '';
+      const contactNumber = pharmacy.contactNomber || pharmacy.userData?.phoneNumber || '';
+      const username = pharmacy.userData?.username || '';
+      
+      return pharmacyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             contactNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             username.toLowerCase().includes(searchTerm.toLowerCase());
+    });
   }, [searchTerm, pharmaciesData]);
 
   const totalPages = Math.ceil(filteredPharmacies.length / itemsPerPage);
@@ -221,6 +228,21 @@ const AdminPharmacy = () => {
     if (pageNumber > 0 && pageNumber <= totalPages) {
       setCurrentPage(pageNumber);
     }
+  };
+
+  // Helper function to get the display name for a pharmacy
+  const getPharmacyDisplayName = (pharmacy) => {
+    return pharmacy.name || pharmacy.pharmacyName || pharmacy.userData?.username || 'N/A';
+  };
+
+  // Helper function to get the email for a pharmacy
+  const getPharmacyEmail = (pharmacy) => {
+    return pharmacy.email || pharmacy.userData?.email || 'N/A';
+  };
+
+  // Helper function to get the contact number for a pharmacy
+  const getPharmacyContact = (pharmacy) => {
+    return pharmacy.contactNomber || pharmacy.userData?.phoneNumber || 'N/A';
   };
 
   // Login Form Component
@@ -293,7 +315,8 @@ const AdminPharmacy = () => {
     return (
       <div className="bg-white rounded-lg shadow-md p-8">
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg text-gray-600">Loading pharmacies...</div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="ml-4 text-lg text-gray-600">Loading pharmacies...</div>
         </div>
       </div>
     );
@@ -310,6 +333,12 @@ const AdminPharmacy = () => {
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Retry
+          </button>
+          <button 
+            onClick={adminLogout}
+            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Logout
           </button>
           <div className="text-sm text-gray-500 text-center">
             <p>Troubleshooting steps:</p>
@@ -348,6 +377,12 @@ const AdminPharmacy = () => {
           >
             + Add Pharmacy
           </button>
+          <button
+            onClick={adminLogout}
+            className="bg-red-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-red-700 transition-colors"
+          >
+            Logout
+          </button>
         </div>
       </div>
 
@@ -359,7 +394,7 @@ const AdminPharmacy = () => {
         </div>
         <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-lg shadow">
           <h3 className="text-lg font-semibold">Active Pharmacies</h3>
-          <p className="text-3xl font-bold">{pharmaciesData.length}</p>
+          <p className="text-3xl font-bold">{pharmaciesData.filter(p => p.userData || p.name).length}</p>
         </div>
         <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow">
           <h3 className="text-lg font-semibold">Search Results</h3>
@@ -368,7 +403,7 @@ const AdminPharmacy = () => {
       </div>
 
       {/* Pharmacy List Table */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto bg-white rounded-lg shadow">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -409,30 +444,35 @@ const AdminPharmacy = () => {
                   className="hover:bg-gray-50 transition-colors"
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                      {pharmacy.phId || pharmacy._id || 'N/A'}
+                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
+                      {pharmacy.phId || 'N/A'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {pharmacy.name || 'N/A'}
+                    <div className="flex flex-col">
+                      <span className="font-semibold">{getPharmacyDisplayName(pharmacy)}</span>
+                      {pharmacy.userData?.username && pharmacy.userData.username !== getPharmacyDisplayName(pharmacy) && (
+                        <span className="text-xs text-gray-500">User: {pharmacy.userData.username}</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {pharmacy.email ? (
+                    {getPharmacyEmail(pharmacy) !== 'N/A' ? (
                       <a 
-                        href={`mailto:${pharmacy.email}`}
+                        href={`mailto:${getPharmacyEmail(pharmacy)}`}
                         className="text-blue-600 hover:text-blue-800 hover:underline"
                       >
-                        {pharmacy.email}
+                        {getPharmacyEmail(pharmacy)}
                       </a>
                     ) : 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {pharmacy.contactNomber ? (
+                    {getPharmacyContact(pharmacy) !== 'N/A' ? (
                       <a 
-                        href={`tel:${pharmacy.contactNomber}`}
+                        href={`tel:${getPharmacyContact(pharmacy)}`}
                         className="text-green-600 hover:text-green-800 hover:underline"
                       >
-                        {pharmacy.contactNomber}
+                        {getPharmacyContact(pharmacy)}
                       </a>
                     ) : 'N/A'}
                   </td>
@@ -447,7 +487,7 @@ const AdminPharmacy = () => {
                       </button>
                       <button 
                         className="bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-800 p-2 rounded-full transition-colors"
-                        onClick={() => handleDeletePharmacy(pharmacy.phId || pharmacy._id)}
+                        onClick={() => handleDeletePharmacy(pharmacy.phId)}
                         title="Delete Pharmacy"
                       >
                         <FaTrashAlt className="h-4 w-4" />

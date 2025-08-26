@@ -48,6 +48,55 @@ const PatientDetailsTab = ({ appointmentData, patientId, fallbackPatient }) => {
 
   return (
     <div>
+      {/* Video Call Link (if available) */}
+      {appointment?.url && (
+        <div className="mt-6">
+          <h4 className="text-md font-semibold text-gray-800 mb-3">Video Consultation</h4>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <span className="text-2xl mr-3">📹</span>
+                <div>
+                  <h5 className="font-medium text-green-800">Video Call Available</h5>
+                  <p className="text-green-600 text-sm">Click to join the consultation</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleJoinCall}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Join Call
+                </button>
+                {showVideoCall && (
+                  <button
+                    onClick={() => setShowVideoCall(false)}
+                    className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    Cancel Call 
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Video Call Iframe - Separate Section with Increased Size */}
+      {appointment?.url && showVideoCall && (
+        <div className="mt-6">
+          <h4 className="text-md font-semibold text-gray-800 mb-3">Live Video Consultation</h4>
+          <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm">
+            <iframe
+              src={appointment.url}
+              className="w-full h-screen max-h-[800px] min-h-[600px] border border-gray-200 rounded-lg"
+              allow="camera; microphone; fullscreen; speaker; display-capture"
+              title="Video Call"
+              frameBorder="0"
+            ></iframe>
+          </div>
+        </div>
+      )}
+      
       <h3 className="text-lg font-semibold text-gray-800 mb-3">Patient Overview</h3>
       
       {/* Description Section */}
@@ -128,55 +177,9 @@ const PatientDetailsTab = ({ appointmentData, patientId, fallbackPatient }) => {
         </div>
       </div>
 
-      {/* Video Call Link (if available) */}
-      {appointment?.url && (
-        <div className="mt-6">
-          <h4 className="text-md font-semibold text-gray-800 mb-3">Video Consultation</h4>
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <span className="text-2xl mr-3">📹</span>
-                <div>
-                  <h5 className="font-medium text-green-800">Video Call Available</h5>
-                  <p className="text-green-600 text-sm">Click to join the consultation</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleJoinCall}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Join Call
-                </button>
-                {showVideoCall && (
-                  <button
-                    onClick={() => setShowVideoCall(false)}
-                    className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
-                  >
-                    Hide Call
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      
 
-      {/* Video Call Iframe - Separate Section with Increased Size */}
-      {appointment?.url && showVideoCall && (
-        <div className="mt-6">
-          <h4 className="text-md font-semibold text-gray-800 mb-3">Live Video Consultation</h4>
-          <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm">
-            <iframe
-              src={appointment.url}
-              className="w-full h-screen max-h-[800px] min-h-[600px] border border-gray-200 rounded-lg"
-              allow="camera; microphone; fullscreen; speaker; display-capture"
-              title="Video Call"
-              frameBorder="0"
-            ></iframe>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 };

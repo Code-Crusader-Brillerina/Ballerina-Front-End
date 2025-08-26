@@ -1,357 +1,342 @@
-import React, { useState, useEffect } from 'react';
-import { FaTimes, FaEye, FaEyeSlash, FaSync, FaMapMarkerAlt, FaClock, FaIdCard, FaUser, FaEnvelope, FaPhone, FaCity } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaTimes, FaHospital, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaKey } from 'react-icons/fa';
 
 const AddPharmacyModal = ({ onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
-    // User data
-    uid: '',
-    username: '',
-    email: '',
-    password: '',
-    role: 'pharmacy',
-    phoneNumber: '',
-    city: '',
-    district: '',
-    profilepic: '',
-    
-    // Pharmacy data
-    phId: '',
     pharmacyName: '',
+    email: '',
+    contactNumber: '',
     address: '',
-    licenseNumber: '',
-    operatingHours: '',
+    username: '',
+    password: '',
+    confirmPassword: ''
   });
 
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Auto-generate UID when component mounts
-  useEffect(() => {
-    generateUID();
-  }, []);
-
-  const generateUID = () => {
-    const prefix = 'PH';
-    const timestamp = Date.now().toString();
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    const newUID = `${prefix}${timestamp.slice(-6)}${random}`;
-    
-    setFormData(prevData => ({
-      ...prevData,
-      uid: newUID,
-      phId: newUID
-    }));
-  };
-
-  const handleChange = (e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
     
-    // Clear error when user types
+    // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     // Required field validation
-    if (!formData.username.trim()) newErrors.username = 'Username is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
-    if (!formData.password) newErrors.password = 'Password is required';
-    else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    if (!formData.phoneNumber.trim()) newErrors.phoneNumber = 'Phone number is required';
-    if (!formData.city.trim()) newErrors.city = 'City is required';
-    if (!formData.district.trim()) newErrors.district = 'District is required';
-    if (!formData.pharmacyName.trim()) newErrors.pharmacyName = 'Pharmacy name is required';
-    if (!formData.address.trim()) newErrors.address = 'Address is required';
-    if (!formData.licenseNumber.trim()) newErrors.licenseNumber = 'License number is required';
-    if (!formData.operatingHours.trim()) newErrors.operatingHours = 'Operating hours are required';
-    
+    if (!formData.pharmacyName.trim()) {
+      newErrors.pharmacyName = 'Pharmacy name is required';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.contactNumber.trim()) {
+      newErrors.contactNumber = 'Contact number is required';
+    } else if (!/^\+?[\d\s\-\(\)]+$/.test(formData.contactNumber)) {
+      newErrors.contactNumber = 'Please enter a valid contact number';
+    }
+
+    if (!formData.address.trim()) {
+      newErrors.address = 'Address is required';
+    }
+
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required';
+    } else if (formData.username.length < 3) {
+      newErrors.username = 'Username must be at least 3 characters';
+    }
+
+    if (!formData.password.trim()) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    if (!formData.confirmPassword.trim()) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     
-    setLoading(true);
+    if (!validateForm()) {
+      return;
+    }
 
-    // Structure the data according to your API format
-    const apiData = {
-      user: {
-        uid: formData.uid,
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
-        phoneNumber: formData.phoneNumber,
-        city: formData.city,
-        district: formData.district,
-        profilepic: formData.profilepic
-      },
-      pharmacy: {
-        phId: formData.phId,
-        pharmacyName: formData.pharmacyName,
-        address: formData.address,
-        licenseNumber: formData.licenseNumber,
-        operatingHours: formData.operatingHours
-      }
-    };
-
+    setIsSubmitting(true);
+    
     try {
-      await onSubmit(apiData);
+      // Prepare data for submission (exclude confirmPassword)
+      const { confirmPassword, ...submitData } = formData;
+      await onSubmit(submitData);
     } catch (error) {
-      console.error('Error submitting pharmacy data:', error);
+      console.error('Error submitting form:', error);
+      setErrors({ submit: 'Failed to add pharmacy. Please try again.' });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
+  const handleReset = () => {
+    setFormData({
+      pharmacyName: '',
+      email: '',
+      contactNumber: '',
+      address: '',
+      username: '',
+      password: '',
+      confirmPassword: ''
+    });
+    setErrors({});
+  };
+
   return (
-    <div className="fixed inset-0 bg-gray-800 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-      <div className="relative p-6 w-full max-w-4xl max-h-[95vh] overflow-y-auto bg-white rounded-xl shadow-2xl">
-        <div className="flex justify-between items-center pb-4 mb-6 border-b border-gray-200">
-          <h3 className="text-2xl font-bold text-blue-800">Add New Pharmacy</h3>
-          <button 
-            onClick={onClose} 
-            className="text-gray-500 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-gray-100"
-          >
-            <FaTimes className="h-5 w-5" />
-          </button>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        {/* Modal Header */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-8 py-6 rounded-t-2xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="bg-blue-100 p-3 rounded-full">
+                <FaHospital className="text-blue-600 text-xl" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">Add New Pharmacy</h2>
+                <p className="text-gray-600 text-sm">Create a new pharmacy account in the system</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <FaTimes className="text-xl" />
+            </button>
+          </div>
         </div>
 
-        <div className="space-y-6">
-          {/* ID Section */}
-          <div className="bg-blue-50 p-5 rounded-lg border border-blue-100">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-lg font-semibold text-blue-800 flex items-center">
-                <FaIdCard className="mr-2" /> Pharmacy ID
-              </h4>
-              <button
-                onClick={generateUID}
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center bg-blue-100 px-3 py-1 rounded-md transition-colors"
-              >
-                <FaSync className="mr-1" /> Regenerate
-              </button>
+        {/* Modal Body */}
+        <div className="px-8 py-6 space-y-6">
+          {/* Pharmacy Information Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Pharmacy Information</h3>
+            
+            {/* Pharmacy Name */}
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <FaHospital className="mr-2 text-blue-500" />
+                Pharmacy Name *
+              </label>
+              <input
+                type="text"
+                name="pharmacyName"
+                value={formData.pharmacyName}
+                onChange={handleInputChange}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                  errors.pharmacyName ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter pharmacy name"
+              />
+              {errors.pharmacyName && (
+                <p className="text-red-500 text-xs mt-1">{errors.pharmacyName}</p>
+              )}
             </div>
-            <div className="bg-white p-3 rounded-md border border-blue-200">
-              <code className="text-blue-700 font-mono text-lg">{formData.uid}</code>
-            </div>
-            <p className="text-sm text-gray-600 mt-2">This ID will be used for both user account and pharmacy record</p>
-          </div>
 
-          {/* User Details Section */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
-            <h4 className="text-lg font-semibold text-blue-800 mb-5 pb-2 border-b border-blue-200 flex items-center">
-              <FaUser className="mr-2" /> User Account Details
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Email and Contact Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Username *</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    name="username" 
-                    placeholder="Enter pharmacy username" 
-                    value={formData.username} 
-                    onChange={handleChange} 
-                    className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.username ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  <FaUser className="absolute left-3 top-3.5 text-gray-400" />
-                </div>
-                {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                <div className="relative">
-                  <input 
-                    type="email" 
-                    name="email" 
-                    placeholder="Enter email address" 
-                    value={formData.email} 
-                    onChange={handleChange} 
-                    className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  <FaEnvelope className="absolute left-3 top-3.5 text-gray-400" />
-                </div>
-                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
-                <div className="relative">
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    name="password" 
-                    placeholder="Enter secure password" 
-                    value={formData.password} 
-                    onChange={handleChange} 
-                    className={`w-full p-3 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  <button 
-                    type="button" 
-                    className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </button>
-                </div>
-                {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-                <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
-                <div className="relative">
-                  <input 
-                    type="tel" 
-                    name="phoneNumber" 
-                    placeholder="Enter phone number" 
-                    value={formData.phoneNumber} 
-                    onChange={handleChange} 
-                    className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  <FaPhone className="absolute left-3 top-3.5 text-gray-400" />
-                </div>
-                {errors.phoneNumber && <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    name="city" 
-                    placeholder="Enter city" 
-                    value={formData.city} 
-                    onChange={handleChange} 
-                    className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  <FaCity className="absolute left-3 top-3.5 text-gray-400" />
-                </div>
-                {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">District *</label>
-                <input 
-                  type="text" 
-                  name="district" 
-                  placeholder="Enter district" 
-                  value={formData.district} 
-                  onChange={handleChange} 
-                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.district ? 'border-red-500' : 'border-gray-300'}`}
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <FaEnvelope className="mr-2 text-green-500" />
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                    errors.email ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="pharmacy@example.com"
                 />
-                {errors.district && <p className="text-red-500 text-xs mt-1">{errors.district}</p>}
-              </div>
-            </div>
-          </div>
-
-          {/* Pharmacy Details Section */}
-          <div className="bg-gradient-to-br from-green-50 to-teal-50 p-6 rounded-xl border border-green-100">
-            <h4 className="text-lg font-semibold text-green-800 mb-5 pb-2 border-b border-green-200 flex items-center">
-              <FaMapMarkerAlt className="mr-2" /> Pharmacy Information
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Pharmacy Name *</label>
-                <input 
-                  type="text" 
-                  name="pharmacyName" 
-                  placeholder="Enter pharmacy name" 
-                  value={formData.pharmacyName} 
-                  onChange={handleChange} 
-                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${errors.pharmacyName ? 'border-red-500' : 'border-gray-300'}`}
-                  required 
-                />
-                {errors.pharmacyName && <p className="text-red-500 text-xs mt-1">{errors.pharmacyName}</p>}
-              </div>
-              
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Address *</label>
-                <div className="relative">
-                  <textarea
-                    name="address" 
-                    placeholder="Enter full address" 
-                    value={formData.address} 
-                    onChange={handleChange} 
-                    rows={3}
-                    className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  <FaMapMarkerAlt className="absolute left-3 top-3.5 text-gray-400" />
-                </div>
-                {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">License Number *</label>
-                <input 
-                  type="text" 
-                  name="licenseNumber" 
-                  placeholder="Enter license number" 
-                  value={formData.licenseNumber} 
-                  onChange={handleChange} 
-                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${errors.licenseNumber ? 'border-red-500' : 'border-gray-300'}`}
-                  required 
-                />
-                {errors.licenseNumber && <p className="text-red-500 text-xs mt-1">{errors.licenseNumber}</p>}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Operating Hours *</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    name="operatingHours" 
-                    placeholder="8:00 AM - 10:00 PM" 
-                    value={formData.operatingHours} 
-                    onChange={handleChange} 
-                    className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${errors.operatingHours ? 'border-red-500' : 'border-gray-300'}`}
-                    required 
-                  />
-                  <FaClock className="absolute left-3 top-3.5 text-gray-400" />
-                </div>
-                {errors.operatingHours && <p className="text-red-500 text-xs mt-1">{errors.operatingHours}</p>}
-              </div>
-            </div>
-          </div>
-
-          {/* Form Actions */}
-          <div className="flex flex-col sm:flex-row justify-between items-center pt-6 border-t border-gray-200 gap-4">
-            <p className="text-sm text-gray-500">* indicates required fields</p>
-            <div className="flex space-x-3">
-              <button 
-                type="button"
-                onClick={onClose}
-                className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button 
-                type="button" 
-                onClick={handleSubmit}
-                disabled={loading}
-                className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Adding Pharmacy...</span>
-                  </>
-                ) : (
-                  <span>Add Pharmacy</span>
+                {errors.email && (
+                  <p className="text-red-500 text-xs mt-1">{errors.email}</p>
                 )}
-              </button>
+              </div>
+
+              {/* Contact Number */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <FaPhone className="mr-2 text-purple-500" />
+                  Contact Number *
+                </label>
+                <input
+                  type="tel"
+                  name="contactNumber"
+                  value={formData.contactNumber}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                    errors.contactNumber ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="+1 (555) 123-4567"
+                />
+                {errors.contactNumber && (
+                  <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>
+                )}
+              </div>
             </div>
+
+            {/* Address */}
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <FaMapMarkerAlt className="mr-2 text-red-500" />
+                Address *
+              </label>
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                rows={3}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none ${
+                  errors.address ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter complete pharmacy address"
+              />
+              {errors.address && (
+                <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Login Credentials Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Login Credentials</h3>
+            
+            {/* Username */}
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <FaUser className="mr-2 text-indigo-500" />
+                Username *
+              </label>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                  errors.username ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter unique username"
+              />
+              {errors.username && (
+                <p className="text-red-500 text-xs mt-1">{errors.username}</p>
+              )}
+            </div>
+
+            {/* Password Fields Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Password */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <FaKey className="mr-2 text-yellow-500" />
+                  Password *
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                    errors.password ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter secure password"
+                />
+                {errors.password && (
+                  <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                )}
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <FaKey className="mr-2 text-yellow-500" />
+                  Confirm Password *
+                </label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Confirm password"
+                />
+                {errors.confirmPassword && (
+                  <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Submit Error */}
+          {errors.submit && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="text-red-600 text-sm">{errors.submit}</div>
+            </div>
+          )}
+
+          {/* Modal Footer */}
+          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+            >
+              Reset Form
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Adding...
+                </div>
+              ) : (
+                'Add Pharmacy'
+              )}
+            </button>
           </div>
         </div>
       </div>
