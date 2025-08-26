@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { FaEdit, FaTrashAlt, FaUser } from 'react-icons/fa';
-// import AddPharmacyModal from '../../components/Admin/AdminPharmacy/AddPharmacyModal';
+import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+import AddPharmacyModal from '../../components/Admin/AdminPharmacy/AddPharmacyModal';
 
 const AdminPharmacy = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -9,106 +9,28 @@ const AdminPharmacy = () => {
   const [pharmaciesData, setPharmaciesData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loginCredentials, setLoginCredentials] = useState({ username: '', password: '' });
-  const [loginLoading, setLoginLoading] = useState(false);
   const itemsPerPage = 8;
 
-  // Check if user is already authenticated on component mount
+  // Load pharmacies data on component mount
   useEffect(() => {
-    checkAuthAndFetchData();
+    fetchPharmacies();
   }, []);
-
-  const checkAuthAndFetchData = async () => {
-    try {
-      setLoading(true);
-      await fetchPharmacies();
-      setIsAuthenticated(true);
-    } catch (err) {
-      if (err.message.includes('401') || err.message.includes('Unauthorized')) {
-        setIsAuthenticated(false);
-      }
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Admin login function
-  const adminLogin = async (e) => {
-    e.preventDefault();
-    try {
-      setLoginLoading(true);
-      setError(null);
-
-      const response = await fetch('http://localhost:8080/admin/login', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(loginCredentials),
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        console.log('Admin login successful');
-        setIsAuthenticated(true);
-        setLoginCredentials({ username: '', password: '' });
-        await fetchPharmacies();
-      } else {
-        setError(result.message || 'Login failed');
-      }
-    } catch (error) {
-      setError('Login error: ' + error.message);
-      console.error('Login error:', error);
-    } finally {
-      setLoginLoading(false);
-    }
-  };
-
-  // Admin logout function
-  const adminLogout = async () => {
-    try {
-      const response = await fetch('http://localhost:8080/admin/logout', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      // Clear local state regardless of response
-      setIsAuthenticated(false);
-      setPharmaciesData([]);
-      setError(null);
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Still clear local state
-      setIsAuthenticated(false);
-      setPharmaciesData([]);
-    }
-  };
 
   // Fetch pharmacies data from API
   const fetchPharmacies = async () => {
     try {
+      setLoading(true);
       setError(null);
       
       const response = await fetch('http://localhost:8080/admin/getAllPharmacies', {
         method: 'GET',
-        credentials: 'include', // Include cookies for JWT authentication
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
       });
       
-      // Check if response is ok
       if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Unauthorized - Please login as admin');
-        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
@@ -122,10 +44,12 @@ const AdminPharmacy = () => {
       }
     } catch (err) {
       if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        throw new Error('Cannot connect to server. Please check if the backend is running on http://localhost:8080');
+        setError('Cannot connect to server. Please check if the backend is running on http://localhost:8080');
       } else {
-        throw new Error(err.message);
+        setError(err.message);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -133,7 +57,7 @@ const AdminPharmacy = () => {
     try {
       const response = await fetch('http://localhost:8080/admin/addPharmacy', {
         method: 'POST',
-        credentials: 'include', // Include cookies for JWT authentication
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -149,7 +73,6 @@ const AdminPharmacy = () => {
       if (result.success) {
         console.log('Pharmacy added successfully:', result);
         setIsModalOpen(false);
-        // Refresh the pharmacy list
         await fetchPharmacies();
       } else {
         console.error('Failed to add pharmacy:', result.message);
@@ -166,7 +89,7 @@ const AdminPharmacy = () => {
       try {
         const response = await fetch('http://localhost:8080/admin/deletePharmacy', {
           method: 'DELETE',
-          credentials: 'include', // Include cookies for JWT authentication
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -183,7 +106,6 @@ const AdminPharmacy = () => {
         
         if (result.success) {
           console.log('Pharmacy deleted successfully');
-          // Remove from local state
           setPharmaciesData(prev => prev.filter(pharmacy => pharmacy.phId !== phId));
         } else {
           console.error('Failed to delete pharmacy:', result.message);
@@ -199,10 +121,8 @@ const AdminPharmacy = () => {
   const handleEditPharmacy = (pharmacy) => {
     console.log('Edit pharmacy:', pharmacy);
     // You can implement edit functionality here
-    // For example, open a modal with pre-filled data
   };
 
-  // Updated filtering logic to handle the correct data structure
   const filteredPharmacies = useMemo(() => {
     if (!searchTerm) return pharmaciesData;
     return pharmaciesData.filter(pharmacy => {
@@ -230,85 +150,17 @@ const AdminPharmacy = () => {
     }
   };
 
-  // Helper function to get the display name for a pharmacy
   const getPharmacyDisplayName = (pharmacy) => {
     return pharmacy.name || pharmacy.pharmacyName || pharmacy.userData?.username || 'N/A';
   };
 
-  // Helper function to get the email for a pharmacy
   const getPharmacyEmail = (pharmacy) => {
     return pharmacy.email || pharmacy.userData?.email || 'N/A';
   };
 
-  // Helper function to get the contact number for a pharmacy
   const getPharmacyContact = (pharmacy) => {
     return pharmacy.contactNomber || pharmacy.userData?.phoneNumber || 'N/A';
   };
-
-  // Login Form Component
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-          <div className="text-center mb-8">
-            <div className="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaUser className="text-blue-600 text-3xl" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Admin Login</h1>
-            <p className="text-gray-600">Please login to access Pharmacy Management</p>
-          </div>
-
-          <form onSubmit={adminLogin} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Username
-              </label>
-              <input
-                type="text"
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                placeholder="Enter admin username"
-                value={loginCredentials.username}
-                onChange={(e) => setLoginCredentials(prev => ({ ...prev, username: e.target.value }))}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                placeholder="Enter admin password"
-                value={loginCredentials.password}
-                onChange={(e) => setLoginCredentials(prev => ({ ...prev, password: e.target.value }))}
-              />
-            </div>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="text-red-600 text-sm">{error}</div>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loginLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loginLoading ? 'Signing In...' : 'Sign In'}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center text-sm text-gray-500">
-            <p>Secure admin access to Hospital Management System</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Loading State
   if (loading) {
@@ -329,22 +181,15 @@ const AdminPharmacy = () => {
         <div className="flex flex-col justify-center items-center h-64 space-y-4">
           <div className="text-lg text-red-600">Error: {error}</div>
           <button 
-            onClick={checkAuthAndFetchData}
+            onClick={fetchPharmacies}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Retry
-          </button>
-          <button 
-            onClick={adminLogout}
-            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            Logout
           </button>
           <div className="text-sm text-gray-500 text-center">
             <p>Troubleshooting steps:</p>
             <ul className="mt-2 space-y-1">
               <li>• Check if Ballerina service is running on port 8080</li>
-              <li>• Verify you're logged in as admin</li>
               <li>• Check CORS configuration allows localhost:3000</li>
               <li>• Check browser console for detailed errors</li>
             </ul>
@@ -357,7 +202,7 @@ const AdminPharmacy = () => {
   // Main Dashboard
   return (
     <div className="bg-white rounded-lg shadow-md p-8">
-      {/* Header with Logout */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 space-y-4 md:space-y-0">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Pharmacy Management</h1>
@@ -376,12 +221,6 @@ const AdminPharmacy = () => {
             className="bg-blue-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
           >
             + Add Pharmacy
-          </button>
-          <button
-            onClick={adminLogout}
-            className="bg-red-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-red-700 transition-colors"
-          >
-            Logout
           </button>
         </div>
       </div>
@@ -512,7 +351,6 @@ const AdminPharmacy = () => {
             Previous
           </button>
           
-          {/* Page numbers */}
           <div className="flex space-x-1">
             {[...Array(Math.min(totalPages, 5))].map((_, i) => {
               let pageNumber;
