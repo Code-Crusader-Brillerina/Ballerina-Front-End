@@ -121,12 +121,15 @@ const AdminMedicine = () => {
     }
   };
 
+  // Updated filteredMedicines to use correct field names
   const filteredMedicines = useMemo(() => {
     if (!searchTerm) return medicinesData;
     return medicinesData.filter(medicine =>
       medicine.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      medicine.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      medicine.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      medicine.form?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      medicine.medicineType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      medicine.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      medicine.strength?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [searchTerm, medicinesData]);
 
@@ -141,8 +144,6 @@ const AdminMedicine = () => {
       setCurrentPage(pageNumber);
     }
   };
-
-  
 
   // Loading State
   if (loading) {
@@ -214,8 +215,10 @@ const AdminMedicine = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Form</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Strength</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size (mg or ml)</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -223,9 +226,11 @@ const AdminMedicine = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {currentMedicines.map((medicine, index) => (
-                <tr key={medicine.id || index} className="hover:bg-gray-50">
+                <tr key={medicine.mediId || index} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{medicine.name || 'N/A'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{medicine.type || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{medicine.form || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{medicine.strength || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{medicine.medicineType || 'N/A'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{medicine.size || 'N/A'}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{medicine.description || 'N/A'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -240,7 +245,7 @@ const AdminMedicine = () => {
                       <FaEdit className="inline-block h-4 w-4" />
                     </button>
                     <button 
-                      onClick={() => handleDeleteMedicine(medicine.id)}
+                      onClick={() => handleDeleteMedicine(medicine.mediId)}
                       className="text-red-600 hover:text-red-900"
                       title="Delete medicine"
                     >
