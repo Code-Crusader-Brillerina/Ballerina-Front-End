@@ -121,15 +121,11 @@ const AdminMedicine = () => {
     }
   };
 
-  // Updated filteredMedicines to use correct field names
+  // Updated filteredMedicines to search ONLY by name
   const filteredMedicines = useMemo(() => {
     if (!searchTerm) return medicinesData;
     return medicinesData.filter(medicine =>
-      medicine.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      medicine.form?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      medicine.medicineType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      medicine.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      medicine.strength?.toLowerCase().includes(searchTerm.toLowerCase())
+      medicine.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [searchTerm, medicinesData]);
 
@@ -190,7 +186,7 @@ const AdminMedicine = () => {
         <div className="flex items-center space-x-4">
           <input
             type="text"
-            placeholder="Search medicines..."
+            placeholder="Search by medicine name..."
             className="px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
