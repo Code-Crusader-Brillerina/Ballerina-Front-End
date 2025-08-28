@@ -1,11 +1,11 @@
-// src/App.js
+
 import React, { useState, useEffect } from 'react';
 import Header from '../../components/Pharmacy/PharmacyMedicineStock/Header';
 import StatsCards from '../../components/Pharmacy/PharmacyMedicineStock/StatsCards';
 import StockChart from '../../components/Pharmacy/PharmacyMedicineStock/StockChart';
 import MedicineTable from '../../components/Pharmacy/PharmacyMedicineStock/MedicineTable';
 
-function App() {
+function PharmacyMedicineStock() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [medicines, setMedicines] = useState([]);
@@ -79,4 +79,4 @@ function App() {
   );
 }
 
-export default App;
+export default PharmacyMedicineStock;

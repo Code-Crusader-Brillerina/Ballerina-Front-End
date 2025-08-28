@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import PrescriptionStats from "../../components/Pharmacy/PharmacyPrescription/PrescriptionStats";
 import PrescriptionCard from "../../components/Pharmacy/PharmacyPrescription/PrescriptionCard";
 
-export default function PharmacyPrescriptionPage() {
+function PharmacyPrescriptionPage() {
   const navigate = useNavigate();
 
   const prescriptions = [
@@ -189,3 +189,5 @@ export default function PharmacyPrescriptionPage() {
     </div>
   );
 }
+
+export default PharmacyPrescriptionPage;

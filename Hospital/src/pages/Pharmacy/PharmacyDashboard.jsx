@@ -28,7 +28,7 @@ const SummaryCard = ({ title, value, color }) => (
   </div>
 );
 
-export default function PharmacyDashboard() {
+function PharmacyDashboard() {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
@@ -85,7 +85,7 @@ export default function PharmacyDashboard() {
           {/* Chart */}
           <MedicineStatusChart data={chartData} />
           
-          {/* Doctor List - View button removed */}
+          {/* Doctor List */}
           <div className="bg-white rounded-2xl shadow-sm p-5">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-lg text-indigo-900">Doctor List</h3>
@@ -144,3 +144,5 @@ export default function PharmacyDashboard() {
     </div>
   );
 }
+
+export default PharmacyDashboard;
