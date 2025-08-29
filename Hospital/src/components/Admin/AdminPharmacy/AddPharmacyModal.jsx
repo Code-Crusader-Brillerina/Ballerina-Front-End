@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { FaTimes, FaHospital, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaKey } from 'react-icons/fa';
+import { 
+  FaTimes, 
+  FaHospital, 
+  FaUser, 
+  FaEnvelope, 
+  FaPhone, 
+  FaMapMarkerAlt, 
+  FaKey, 
+  FaClock, 
+  FaIdCard 
+} from 'react-icons/fa';
 
 const AddPharmacyModal = ({ onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
@@ -9,7 +19,11 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
     address: '',
     username: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    city: '',
+    district: '',
+    licenseNumber: '',
+    operatingHours: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,16 +36,58 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const generatePharmacyId = () => {
+    return Math.floor(100 + Math.random() * 900).toString(); // Generate 3-digit ID
+  };
+
+  const handleSubmit = async () => {
+    // Validate password confirmation
+    if (formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match!');
+      return;
+    }
+
+    // Validate required fields
+    const requiredFields = ['pharmacyName', 'email', 'contactNumber', 'address', 'username', 'password'];
+    const missingFields = requiredFields.filter(field => !formData[field].trim());
+    
+    if (missingFields.length > 0) {
+      alert(`Please fill in the following required fields: ${missingFields.join(', ')}`);
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      // Prepare data for submission (exclude confirmPassword)
-      const { confirmPassword, ...submitData } = formData;
+      // Generate pharmacy ID
+      const phId = generatePharmacyId();
+      
+      // Prepare data in the format expected by backend
+      const submitData = {
+        user: {
+          uid: phId,
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          role: "pharmacy",
+          phoneNumber: formData.contactNumber,
+          city: formData.city || "Unknown",
+          district: formData.district || "Unknown",
+          profilepic: "https://example.com/profiles/pharmacy.jpg" // Default profile pic
+        },
+        pharmacy: {
+          phId: phId,
+          pharmacyName: formData.pharmacyName,
+          address: formData.address,
+          licenseNumber: formData.licenseNumber || `PH-${new Date().getFullYear()}-${phId}`,
+          operatingHours: formData.operatingHours || "8:00 AM - 10:00 PM"
+        }
+      };
+      
       await onSubmit(submitData);
     } catch (error) {
       console.error('Error submitting form:', error);
+      alert('Failed to add pharmacy. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -45,13 +101,17 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
       address: '',
       username: '',
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      city: '',
+      district: '',
+      licenseNumber: '',
+      operatingHours: ''
     });
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         {/* Modal Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-8 py-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
@@ -74,7 +134,7 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
         </div>
 
         {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="px-8 py-6 space-y-6">
+        <div className="px-8 py-6 space-y-6">
           {/* Pharmacy Information Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Pharmacy Information</h3>
@@ -83,7 +143,7 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                 <FaHospital className="mr-2 text-blue-500" />
-                Pharmacy Name
+                Pharmacy Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -101,7 +161,7 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
               <div>
                 <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <FaEnvelope className="mr-2 text-green-500" />
-                  Email Address
+                  Email Address <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
@@ -117,7 +177,7 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
               <div>
                 <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <FaPhone className="mr-2 text-purple-500" />
-                  Contact Number
+                  Contact Number <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="tel"
@@ -130,11 +190,46 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
               </div>
             </div>
 
+            {/* City and District Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* City */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <FaMapMarkerAlt className="mr-2 text-red-500" />
+                  City
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  placeholder="Enter city"
+                />
+              </div>
+
+              {/* District */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <FaMapMarkerAlt className="mr-2 text-red-500" />
+                  District
+                </label>
+                <input
+                  type="text"
+                  name="district"
+                  value={formData.district}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  placeholder="Enter district"
+                />
+              </div>
+            </div>
+
             {/* Address */}
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                 <FaMapMarkerAlt className="mr-2 text-red-500" />
-                Address
+                Complete Address <span className="text-red-500">*</span>
               </label>
               <textarea
                 name="address"
@@ -144,6 +239,41 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
                 placeholder="Enter complete pharmacy address"
               />
+            </div>
+
+            {/* License and Operating Hours Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* License Number */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <FaIdCard className="mr-2 text-orange-500" />
+                  License Number
+                </label>
+                <input
+                  type="text"
+                  name="licenseNumber"
+                  value={formData.licenseNumber}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  placeholder="PH-2024-001 (auto-generated if empty)"
+                />
+              </div>
+
+              {/* Operating Hours */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <FaClock className="mr-2 text-teal-500" />
+                  Operating Hours
+                </label>
+                <input
+                  type="text"
+                  name="operatingHours"
+                  value={formData.operatingHours}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  placeholder="8:00 AM - 10:00 PM (default)"
+                />
+              </div>
             </div>
           </div>
 
@@ -155,7 +285,7 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                 <FaUser className="mr-2 text-indigo-500" />
-                Username
+                Username <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -173,7 +303,7 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
               <div>
                 <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <FaKey className="mr-2 text-yellow-500" />
-                  Password
+                  Password <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="password"
@@ -189,7 +319,7 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
               <div>
                 <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <FaKey className="mr-2 text-yellow-500" />
-                  Confirm Password
+                  Confirm Password <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="password"
@@ -220,7 +350,8 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
               Cancel
             </button>
             <button
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               disabled={isSubmitting}
               className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -234,7 +365,7 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
               )}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
