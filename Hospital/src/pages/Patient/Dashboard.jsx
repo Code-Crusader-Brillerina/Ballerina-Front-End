@@ -118,34 +118,43 @@ const PrescriptionCard = ({ prescription, isActive, onClick }) => (
 );
 
 // Enhanced Delivery Progress Component
+// Enhanced Delivery Progress Component
 const DeliveryProgress = ({ prescription }) => {
-  // This is a simplified static mapping. A real app might get this from the prescription object itself.
+  // This function now correctly handles all delivery stages.
   const getSteps = (status) => {
-    const baseSteps = [
-      { name: 'Order Confirmed', icon: '📝', completed: false },
-      { name: 'Order Packed', icon: '📦', completed: false },
-      { name: 'Shipped', icon: '🚚', completed: false },
-      { name: 'Delivered', icon: '✅', completed: false },
+    const steps = [
+      { name: 'Order Confirmed', icon: '📝', statusKeyword: 'confirmed' },
+      { name: 'Order Packed',    icon: '📦', statusKeyword: 'packed' },
+      { name: 'Shipped',         icon: '🚚', statusKeyword: 'shipped' },
+      { name: 'Delivered',       icon: '✅', statusKeyword: 'delivered' },
     ];
 
-    if (!status) return baseSteps;
-
-    if (status.toLowerCase().includes('confirmed')) {
-      baseSteps[0].completed = true;
+    if (!status) {
+      // If no status, return all steps as incomplete
+      return steps.map(step => ({ ...step, completed: false }));
     }
-    if (status.toLowerCase().includes('packed')) {
-      baseSteps[0].completed = true;
-      baseSteps[1].completed = true;
-    }
-    // Add more status checks as needed
 
-    return baseSteps;
+    const lowerCaseStatus = status.toLowerCase();
+    let activeIndex = -1;
+
+    // Find the index of the latest status in the sequence
+    for (let i = steps.length - 1; i >= 0; i--) {
+      if (lowerCaseStatus.includes(steps[i].statusKeyword)) {
+        activeIndex = i;
+        break;
+      }
+    }
+    
+    // Mark the active step and all previous steps as completed
+    return steps.map((step, index) => ({
+      ...step,
+      completed: index <= activeIndex
+    }));
   };
 
   const steps = prescription ? getSteps(prescription.status) : [];
 
   return (
-    // ... JSX for delivery progress remains the same
     <div className="space-y-4">
       {steps.length > 0 && prescription ? (
         steps.map((step, index) => (
@@ -160,7 +169,7 @@ const DeliveryProgress = ({ prescription }) => {
             </div>
             {step.completed && <CheckCircle className="w-6 h-6 text-green-500" />}
             {index < steps.length - 1 && (
-              <div className={`absolute left-6 top-16 w-0.5 h-4 ${step.completed ? 'bg-green-300' : 'bg-gray-300'}`}></div>
+              <div className={`absolute left-6 top-16 w-0.5 h-4 ${step.completed && steps[index + 1].completed ? 'bg-green-300' : 'bg-gray-300'}`}></div>
             )}
           </div>
         ))
@@ -205,39 +214,38 @@ const Dashboard = () => {
           const fetchedAppointments = appointmentsData.data;
           const fetchedPrescriptions = prescriptionsData.data;
 
-          // Store all prescriptions for use in the summary view
           setAllPrescriptions(fetchedPrescriptions);
 
+          // --- MODIFICATION START ---
+
           // 1. --- Filter for the "Prescriptions & Delivery" section ---
-          // Shows only prescriptions that have been paid for and confirmed.
+          // Define the list of valid statuses for the delivery section.
+          const deliveryStatuses = ['order confirmed', 'Order Packed', 'Shipped', 'Delivered'];
+          
+          // Shows prescriptions that are paid and have one of the valid delivery statuses.
           const paidList = fetchedPrescriptions.filter(p =>
-            p.diliveryMethod === 'paid' && p.status === 'order confirmed'
+            p.diliveryMethod === 'paid' && deliveryStatuses.includes(p.status)
           );
-          // console.log(recentList);
+          
+          // --- MODIFICATION END ---
+          
           setPaidPrescriptions(paidList);
 
-          // Create a Set of appointment IDs from the paid prescriptions for efficient lookup
           const paidPrescriptionAppointmentIds = new Set(paidList.map(p => p.appoinment.aid));
 
-          // 2. --- Filter for the "Recent Appointments" section ---
-          // Shows completed/paid appointments where the prescription has NOT been paid/confirmed yet.
+          // 2. --- Filter for the "Recent Appointments" section (logic is unchanged) ---
           const recentList = fetchedAppointments
             .filter(appt => appt.status === 'completed' && appt.paymentState === 'paid')
-            .filter(appt => {
-              // Keep the appointment only if its ID is NOT in the set of paid prescription appointments
-              return !paidPrescriptionAppointmentIds.has(appt.aid);
-            })
+            .filter(appt => !paidPrescriptionAppointmentIds.has(appt.aid))
             .map(appt => {
-              // Still find the matching prescription to get its ID for the button
               const matchingPrescription = fetchedPrescriptions.find(p => p.appoinment?.aid === appt.aid);
               return {
                 ...appt,
                 prescriptionId: matchingPrescription?.preId
               };
             })
-            .filter(appt => appt.prescriptionId); // Ensure it has a prescription linked
+            .filter(appt => appt.prescriptionId); 
 
-          console.log(recentList);
           setCompletedAppointments(recentList);
 
           // 3. --- Filter for "Upcoming Appointments" (logic is unchanged) ---
