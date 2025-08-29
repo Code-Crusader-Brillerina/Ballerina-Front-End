@@ -73,7 +73,10 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
           phoneNumber: formData.contactNumber,
           city: formData.city || "Unknown",
           district: formData.district || "Unknown",
-          profilepic: "https://example.com/profiles/pharmacy.jpg" // Default profile pic
+          profilepic: "",
+          emailConfirmed: 1,
+          OTP: null,
+
         },
         pharmacy: {
           phId: phId,
@@ -105,7 +108,9 @@ const AddPharmacyModal = ({ onClose, onSubmit }) => {
       city: '',
       district: '',
       licenseNumber: '',
-      operatingHours: ''
+      operatingHours: '',
+      emailConfirmed: 1,
+      OTP: null,
     });
   };
 

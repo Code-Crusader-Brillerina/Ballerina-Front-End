@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { X, User, Mail, Lock, Phone, MapPin, BriefcaseMedical, FileText, Award, Clock, DollarSign, Camera } from 'lucide-react';
-
-// --- IMPORTS FOR FIREBASE ---
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../../firebase'; // Make sure this path points to your firebase config file
+import { storage } from '../../../firebase'; 
 
 const AddDoctorModal = ({ onClose, onSubmit }) => {
     const [formData, setFormData] = useState({
@@ -20,9 +18,10 @@ const AddDoctorModal = ({ onClose, onSubmit }) => {
         consultationFee: '',
         availableTimes: [],
         description: '',
+        emailConfirmed: 1,
+        OTP: null,
     });
 
-    // --- NEW STATE FOR IMAGE & SUBMISSION HANDLING ---
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
@@ -32,7 +31,7 @@ const AddDoctorModal = ({ onClose, onSubmit }) => {
     const [currentStep, setCurrentStep] = useState(1);
 
     const generateId = () => {
-        return Date.now().toString().slice(-6) + Math.random().toString(36).substr(2, 3);
+        return "d" + Date.now().toString();
     };
 
     const handleChange = (e) => {
@@ -50,7 +49,6 @@ const AddDoctorModal = ({ onClose, onSubmit }) => {
         }));
     };
 
-    // --- NEW HANDLER FOR IMAGE SELECTION ---
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -65,25 +63,20 @@ const AddDoctorModal = ({ onClose, onSubmit }) => {
         setError('');
         setUploadProgress(0);
 
-        let profilePicUrl = ''; // Default empty URL
+        let profilePicUrl = '';
 
-        // --- STEP 1: UPLOAD IMAGE TO FIREBASE IF A FILE IS SELECTED ---
         if (imageFile) {
             try {
-                // Create a unique file name for the doctor's profile picture
                 const storageRef = ref(storage, `profile_pictures/doctors/${Date.now()}_${imageFile.name}`);
                 const uploadTask = uploadBytesResumable(storageRef, imageFile);
 
-                // Wait for the upload to complete and get the URL
                 profilePicUrl = await new Promise((resolve, reject) => {
-                    uploadTask.on(
-                        'state_changed',
+                    uploadTask.on('state_changed',
                         (snapshot) => {
                             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                             setUploadProgress(progress);
                         },
                         (error) => {
-                            console.error("Firebase upload error:", error);
                             reject('Image upload failed. Please try again.');
                         },
                         async () => {
@@ -92,15 +85,13 @@ const AddDoctorModal = ({ onClose, onSubmit }) => {
                         }
                     );
                 });
-
             } catch (uploadError) {
                 setError(uploadError.toString());
                 setIsSubmitting(false);
-                return; // Stop the submission process if image upload fails
+                return;
             }
         }
 
-        // --- STEP 2: SEND DATA TO YOUR BACKEND API ---
         try {
             const uniqueId = generateId();
             const apiData = {
@@ -113,7 +104,9 @@ const AddDoctorModal = ({ onClose, onSubmit }) => {
                     phoneNumber: formData.phoneNumber,
                     city: formData.city,
                     district: formData.district,
-                    profilepic: profilePicUrl // Use the URL from Firebase
+                    profilepic: profilePicUrl,
+                    emailConfirmed: 1,
+                    OTP: null,
                 },
                 doctorData: {
                     did: uniqueId,
@@ -143,9 +136,8 @@ const AddDoctorModal = ({ onClose, onSubmit }) => {
             const result = await response.json();
 
             if (result.success) {
-                // Construct the new doctor object for local state update
                 const newDoctor = { ...apiData.userData, ...apiData.doctorData };
-                delete newDoctor.password; // Don't store password in local state
+                delete newDoctor.password;
                 
                 onSubmit(newDoctor);
                 alert('Doctor added successfully!');
@@ -153,7 +145,6 @@ const AddDoctorModal = ({ onClose, onSubmit }) => {
                 throw new Error(result.message || 'Failed to add doctor');
             }
         } catch (err) {
-            console.error('Error adding doctor:', err);
             setError(err.message);
         } finally {
             setIsSubmitting(false);
@@ -170,8 +161,7 @@ const AddDoctorModal = ({ onClose, onSubmit }) => {
 
     const specializations = [
         'Cardiology', 'Dermatology', 'Neurology', 'Pediatrics', 'Orthopedics',
-        'Ophthalmology', 'Psychiatry', 'Dentistry', 'Surgery', 'Gynecology',
-        'Endocrinology', 'Gastroenterology', 'Urology', 'Oncology', 'Radiology'
+        'Ophthalmology', 'Psychiatry', 'Dentistry', 'Surgery', 'Gynecology'
     ];
 
     return (
@@ -186,46 +176,15 @@ const AddDoctorModal = ({ onClose, onSubmit }) => {
                                 {currentStep === 1 ? "Personal Information" : "Professional Details"}
                             </p>
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
-                            disabled={isSubmitting}
-                        >
+                        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 rounded-full" disabled={isSubmitting}>
                             <X className="h-6 w-6" />
                         </button>
-                    </div>
-                    {/* Progress Bar */}
-                    <div className="mt-4">
-                        <div className="flex items-center">
-                            {[1, 2].map((step) => (
-                                <React.Fragment key={step}>
-                                    <div className={`flex flex-col items-center ${step < currentStep ? 'text-blue-600' : step === currentStep ? 'text-blue-800' : 'text-gray-400'}`}>
-                                        <div className={`h-8 w-8 rounded-full flex items-center justify-center border-2 ${step < currentStep ? 'bg-blue-600 border-blue-600 text-white' : step === currentStep ? 'border-blue-600 bg-white' : 'border-gray-300 bg-white'}`}>
-                                            {step < currentStep ? (
-                                                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                            ) : (
-                                                <span>{step}</span>
-                                            )}
-                                        </div>
-                                        <span className="text-xs mt-1">Step {step}</span>
-                                    </div>
-                                    {step < 2 && (
-                                        <div className={`flex-1 h-1 mx-2 ${step < currentStep ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
-                                    )}
-                                </React.Fragment>
-                            ))}
-                        </div>
                     </div>
                 </div>
 
                 <div className="p-6">
                     {error && (
-                        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-start">
-                            <svg className="h-5 w-5 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
                             <span>{error}</span>
                         </div>
                     )}
@@ -233,131 +192,101 @@ const AddDoctorModal = ({ onClose, onSubmit }) => {
                     <form onSubmit={handleSubmit}>
                         {currentStep === 1 && (
                             <div className="space-y-6">
-                                {/* --- PROFILE PICTURE UPLOAD UI --- */}
                                 <div className="flex flex-col items-center space-y-4">
                                     <div className="relative">
-                                        <img
-                                            src={imagePreview || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png'}
-                                            alt="Profile Preview"
-                                            className="w-24 h-24 rounded-full object-cover border-4 border-gray-100 shadow-md"
-                                        />
-                                        <label
-                                            htmlFor="profilePic"
-                                            className="absolute -bottom-2 -right-2 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors">
+                                        <img src={imagePreview || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png'} alt="Profile Preview" className="w-24 h-24 rounded-full object-cover border-4 border-gray-100 shadow-md" />
+                                        <label htmlFor="profilePic" className="absolute -bottom-2 -right-2 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700">
                                             <Camera className="w-4 h-4" />
-                                            <input
-                                                type="file"
-                                                id="profilePic"
-                                                accept="image/*"
-                                                onChange={handleImageChange}
-                                                className="hidden"
-                                                disabled={isSubmitting}
-                                            />
+                                            <input type="file" id="profilePic" accept="image/*" onChange={handleImageChange} className="hidden" disabled={isSubmitting} />
                                         </label>
                                     </div>
                                     {isSubmitting && imageFile && (
                                         <div className="w-full max-w-xs bg-gray-200 rounded-full h-2.5">
-                                            <div
-                                                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                                                style={{ width: `${uploadProgress}%` }}>
-                                            </div>
+                                            <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
                                         </div>
                                     )}
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Form fields... */}
                                     <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700 flex items-center"><User className="h-4 w-4 mr-2" />Full Name *</label>
-                                        <input type="text" name="username" value={formData.username} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required disabled={isSubmitting} />
+                                        <label className="block text-sm font-medium text-gray-700">Full Name *</label>
+                                        <input type="text" name="username" value={formData.username} onChange={handleChange} className="w-full p-3 border rounded-lg" required disabled={isSubmitting} />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700 flex items-center"><Mail className="h-4 w-4 mr-2" />Email Address *</label>
-                                        <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required disabled={isSubmitting} />
+                                        <label className="block text-sm font-medium text-gray-700">Email Address *</label>
+                                        <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full p-3 border rounded-lg" required disabled={isSubmitting} />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700 flex items-center"><Lock className="h-4 w-4 mr-2" />Password *</label>
-                                        <input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required disabled={isSubmitting} />
+                                        <label className="block text-sm font-medium text-gray-700">Password *</label>
+                                        <input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full p-3 border rounded-lg" required disabled={isSubmitting} />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700 flex items-center"><Phone className="h-4 w-4 mr-2" />Phone Number *</label>
-                                        <input type="text" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required disabled={isSubmitting} />
+                                        <label className="block text-sm font-medium text-gray-700">Phone Number *</label>
+                                        <input type="text" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} className="w-full p-3 border rounded-lg" required disabled={isSubmitting} />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700 flex items-center"><MapPin className="h-4 w-4 mr-2" />City *</label>
-                                        <input type="text" name="city" value={formData.city} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required disabled={isSubmitting} />
+                                        <label className="block text-sm font-medium text-gray-700">City *</label>
+                                        <input type="text" name="city" value={formData.city} onChange={handleChange} className="w-full p-3 border rounded-lg" required disabled={isSubmitting} />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700 flex items-center"><MapPin className="h-4 w-4 mr-2" />District *</label>
-                                        <input type="text" name="district" value={formData.district} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required disabled={isSubmitting} />
+                                        <label className="block text-sm font-medium text-gray-700">District *</label>
+                                        <input type="text" name="district" value={formData.district} onChange={handleChange} className="w-full p-3 border rounded-lg" required disabled={isSubmitting} />
                                     </div>
                                 </div>
                                 <div className="flex justify-end pt-4">
-                                    <button type="button" onClick={nextStep} className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center" disabled={isSubmitting || !formData.username || !formData.email || !formData.password || !formData.phoneNumber || !formData.city || !formData.district}>
+                                    <button type="button" onClick={nextStep} className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg" disabled={isSubmitting}>
                                         Next
-                                        <svg className="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                                     </button>
                                 </div>
                             </div>
                         )}
 
                         {currentStep === 2 && (
-                             <div className="space-y-6">
+                            <div className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                     <div className="space-y-2">
-                                         <label className="block text-sm font-medium text-gray-700 flex items-center"><BriefcaseMedical className="h-4 w-4 mr-2" />Specialization *</label>
-                                         <select name="specialization" value={formData.specialization} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required disabled={isSubmitting}>
-                                             <option value="">Select a specialization</option>
-                                             {specializations.map((spec) => (<option key={spec} value={spec}>{spec}</option>))}
-                                         </select>
-                                     </div>
-                                     <div className="space-y-2">
-                                         <label className="block text-sm font-medium text-gray-700 flex items-center"><FileText className="h-4 w-4 mr-2" />License Number *</label>
-                                         <input type="text" name="licenseNomber" value={formData.licenseNomber} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required disabled={isSubmitting}/>
-                                     </div>
-                                     <div className="space-y-2">
-                                         <label className="block text-sm font-medium text-gray-700 flex items-center"><Award className="h-4 w-4 mr-2" />Years of Experience *</label>
-                                         <input type="number" name="experience" min="0" value={formData.experience} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required disabled={isSubmitting}/>
-                                     </div>
-                                     <div className="space-y-2">
-                                         <label className="block text-sm font-medium text-gray-700 flex items-center"><DollarSign className="h-4 w-4 mr-2" />Consultation Fee (LKR) *</label>
-                                         <input type="number" name="consultationFee" min="0" step="100" value={formData.consultationFee} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required disabled={isSubmitting}/>
-                                     </div>
-                                     <div className="md:col-span-2 space-y-2">
-                                         <label className="block text-sm font-medium text-gray-700 flex items-center"><Clock className="h-4 w-4 mr-2" />Available Times *</label>
-                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-                                             {timeOptions.map((option) => (
-                                                 <label key={option.value} className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${formData.availableTimes.includes(option.value) ? 'bg-blue-50 border-blue-500' : 'border-gray-300 hover:border-blue-300'}`}>
-                                                     <input type="checkbox" value={option.value} checked={formData.availableTimes.includes(option.value)} onChange={handleTimeChange} className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500" disabled={isSubmitting}/>
-                                                     {option.label}
-                                                 </label>
-                                             ))}
-                                         </div>
-                                     </div>
-                                     <div className="md:col-span-2 space-y-2">
-                                         <label className="block text-sm font-medium text-gray-700">Professional Description *</label>
-                                         <textarea name="description" value={formData.description} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" rows="4" required disabled={isSubmitting}/>
-                                     </div>
-                                 </div>
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">Specialization *</label>
+                                        <select name="specialization" value={formData.specialization} onChange={handleChange} className="w-full p-3 border rounded-lg" required disabled={isSubmitting}>
+                                            <option value="">Select a specialization</option>
+                                            {specializations.map((spec) => (<option key={spec} value={spec}>{spec}</option>))}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">License Number *</label>
+                                        <input type="text" name="licenseNomber" value={formData.licenseNomber} onChange={handleChange} className="w-full p-3 border rounded-lg" required disabled={isSubmitting}/>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">Years of Experience *</label>
+                                        <input type="number" name="experience" min="0" value={formData.experience} onChange={handleChange} className="w-full p-3 border rounded-lg" required disabled={isSubmitting}/>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">Consultation Fee (LKR) *</label>
+                                        <input type="number" name="consultationFee" min="0" step="100" value={formData.consultationFee} onChange={handleChange} className="w-full p-3 border rounded-lg" required disabled={isSubmitting}/>
+                                    </div>
+                                    <div className="md:col-span-2 space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">Available Times *</label>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                                            {timeOptions.map((option) => (
+                                                <label key={option.value} className="flex items-center p-3 border rounded-lg">
+                                                    <input type="checkbox" value={option.value} checked={formData.availableTimes.includes(option.value)} onChange={handleTimeChange} className="mr-3 h-4 w-4" disabled={isSubmitting}/>
+                                                    {option.label}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="md:col-span-2 space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">Professional Description *</label>
+                                        <textarea name="description" value={formData.description} onChange={handleChange} className="w-full p-3 border rounded-lg" rows="4" required disabled={isSubmitting}/>
+                                    </div>
+                                </div>
                                 <div className="flex justify-between pt-4">
-                                     <button type="button" onClick={prevStep} className="px-6 py-3 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 flex items-center" disabled={isSubmitting}>
-                                         <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
-                                         Back
-                                     </button>
-                                     <button type="submit" className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center" disabled={isSubmitting || !formData.specialization || !formData.licenseNomber || !formData.experience || !formData.consultationFee || formData.availableTimes.length === 0 || !formData.description}>
-                                         {isSubmitting ? (
-                                             <>
-                                                 <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                 </svg>
-                                                 Adding Doctor...
-                                             </>
-                                         ) : (
-                                             'Add Doctor'
-                                         )}
-                                     </button>
-                                 </div>
-                             </div>
+                                    <button type="button" onClick={prevStep} className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg" disabled={isSubmitting}>
+                                        Back
+                                    </button>
+                                    <button type="submit" className="px-6 py-3 bg-blue-600 text-white rounded-lg" disabled={isSubmitting}>
+                                        {isSubmitting ? 'Adding Doctor...' : 'Add Doctor'}
+                                    </button>
+                                </div>
+                            </div>
                         )}
                     </form>
                 </div>

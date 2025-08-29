@@ -11,7 +11,6 @@ const AdminDoctor = () => {
   const [error, setError] = useState(null);
   const itemsPerPage = 8;
 
-  // Fixed function name and logic to fetch doctors instead of medicines
   const fetchDoctors = async () => {
     try {
       setError(null);
@@ -25,7 +24,6 @@ const AdminDoctor = () => {
         },
       });
       
-      // Check if response is ok
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -34,13 +32,12 @@ const AdminDoctor = () => {
       
       if (result.success && result.data) {
         setDoctorsData(result.data);
-        console.log('Doctors loaded successfully:', result.data);
       } else {
         throw new Error(result.message || 'Failed to fetch doctors data');
       }
     } catch (err) {
-      if (err.username === 'TypeError' && err.message.includes('fetch')) {
-        setError('Cannot connect to server. Please check if the backend is running on http://localhost:8080');
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        setError('Cannot connect to server. Please check if the backend is running.');
       } else {
         setError(err.message);
       }
@@ -49,29 +46,27 @@ const AdminDoctor = () => {
     }
   };
 
-  // Fetch doctors on component mount
   useEffect(() => {
     fetchDoctors();
   }, []);
 
-  const handleAddDoctor = (doctorData) => {
-    console.log('Adding new doctor:', doctorData);
-    // Add the new doctor to the existing data
-    setDoctorsData(prevData => [...prevData, doctorData]);
+  const handleAddDoctor = (newDoctor) => {
+    // Add the new doctor to the list to update UI without a full refetch
+    setDoctorsData(prevData => [newDoctor, ...prevData]);
     setIsModalOpen(false);
   };
 
   const handleDeleteDoctor = async (doctorId) => {
-    // Show confirmation dialog
-    const confirmed = window.confirm('Are you sure you want to delete this doctor?');
-    if (!confirmed) return;
+    if (!window.confirm('Are you sure you want to delete this doctor?')) {
+      return;
+    }
 
     try {
       setLoading(true);
       
       const response = await fetch('http://localhost:8080/admin/deleteDoctor', {
         method: 'DELETE',
-        credentials: 'include', // Include cookies for JWT authentication
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -85,14 +80,10 @@ const AdminDoctor = () => {
       const result = await response.json();
 
       if (result.success) {
-        // Remove the doctor from the local state
         setDoctorsData(prevData => prevData.filter(doctor => doctor.did !== doctorId));
-        console.log('Doctor deleted successfully:', doctorId);
-        
-        // Show success message (you can replace with a toast notification)
         alert('Doctor deleted successfully!');
         
-        // If we're on a page with no items after deletion, go to previous page
+        // Adjust current page if the last item on a page is deleted
         const updatedDoctors = doctorsData.filter(doctor => doctor.did !== doctorId);
         const newTotalPages = Math.ceil(updatedDoctors.length / itemsPerPage);
         if (currentPage > newTotalPages && newTotalPages > 0) {
@@ -102,7 +93,6 @@ const AdminDoctor = () => {
         throw new Error(result.message || 'Failed to delete doctor');
       }
     } catch (err) {
-      console.error('Error deleting doctor:', err);
       setError(err.message);
       alert('Failed to delete doctor. Please try again.');
     } finally {
@@ -110,7 +100,6 @@ const AdminDoctor = () => {
     }
   };
 
-  // Updated search filter to only search by doctor name (username)
   const filteredDoctors = useMemo(() => {
     if (!searchTerm) return doctorsData;
     return doctorsData.filter(doctor =>
@@ -130,8 +119,7 @@ const AdminDoctor = () => {
     }
   };
 
-  // Loading state
-  if (loading) {
+  if (loading && doctorsData.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-md p-8">
         <div className="flex justify-center items-center h-64">
@@ -141,7 +129,6 @@ const AdminDoctor = () => {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="bg-white rounded-lg shadow-md p-8">
@@ -153,15 +140,6 @@ const AdminDoctor = () => {
           >
             Retry
           </button>
-          <div className="text-sm text-gray-500 text-center">
-            <p>Troubleshooting steps:</p>
-            <ul className="mt-2 space-y-1">
-              <li>• Check if Ballerina service is running on port 8080</li>
-              <li>• Verify you're logged in as admin</li>
-              <li>• Check CORS configuration allows localhost:3000</li>
-              <li>• Check browser console for detailed errors</li>
-            </ul>
-          </div>
         </div>
       </div>
     );
@@ -169,7 +147,6 @@ const AdminDoctor = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-8">
-      {/* Header, Add Doctor Button, Search, and Filters */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 space-y-4 md:space-y-0">
         <h1 className="text-3xl font-bold text-gray-800">Doctor Management</h1>
         <div className="flex items-center space-x-4">
@@ -189,7 +166,6 @@ const AdminDoctor = () => {
         </div>
       </div>
 
-      {/* Doctor List Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -204,13 +180,13 @@ const AdminDoctor = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {currentDoctors.length > 0 ? (
-              currentDoctors.map((doctor, index) => (
-                <tr key={doctor.did || index}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{doctor.username || doctor.did}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.email || 'N/A'}</td>
+              currentDoctors.map((doctor) => (
+                <tr key={doctor.did}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{doctor.username}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.specialization}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.licenseNomber || 'N/A'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.experience || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.licenseNomber}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.experience} years</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button className="text-blue-600 hover:text-blue-900 mr-2" title="Edit Doctor">
                       <FaEdit className="inline-block h-4 w-4" />
@@ -236,13 +212,12 @@ const AdminDoctor = () => {
         </table>
       </div>
 
-      {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center mt-8 space-x-2">
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50"
           >
             Previous
           </button>
@@ -250,7 +225,7 @@ const AdminDoctor = () => {
             <button
               key={i + 1}
               onClick={() => handlePageChange(i + 1)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-semibold ${
                 currentPage === i + 1
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
@@ -262,14 +237,13 @@ const AdminDoctor = () => {
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50"
           >
             Next
           </button>
         </div>
       )}
 
-      {/* The modal component */}
       {isModalOpen && (
         <AddDoctorModal
           onClose={() => setIsModalOpen(false)}
