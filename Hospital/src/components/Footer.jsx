@@ -23,14 +23,14 @@ const Footer = () => {
   return (
     <>
       {/* Back to Top Button */}
-      <button
+      {/* <button
         onClick={scrollToTop}
         className={`fixed bottom-8 right-8 z-40 w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform ${
           isBackToTopVisible ? 'translate-y-0 opacity-100' : 'translate-y-16 opacity-0'
         } hover:scale-110`}
       >
         <ArrowUp className="w-6 h-6 mx-auto" />
-      </button>
+      </button> */}
 
       <footer className="relative bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 text-white overflow-hidden">
         {/* Decorative Elements */}

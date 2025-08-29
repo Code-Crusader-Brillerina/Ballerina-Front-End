@@ -1,0 +1,122 @@
+Hospital Website Guide (Updated for AI)
+
+Website Overview:
+The hospital website is designed for patients to access information about doctors, appointments, pharmacies, and hospital services. It has a navigation bar (navbar), footer, and several key pages.
+
+Navbar Sections:
+
+Home:
+
+Overview of the hospital.
+
+Welcome message and brief introduction.
+
+Links to other sections (doctors, dashboard, pharmacy, about).
+
+Doctors:
+
+List of all doctors with specialization, consultation fee, experience, and available times.
+
+Patients can view doctor profiles.
+
+Users can request to book an appointment with a doctor.
+
+Dashboard / User Profile:
+
+Displays all data about the logged-in patient.
+
+Users can update their personal information.
+
+Shows upcoming appointments, consultation history, and payment status.
+
+Pharmacy:
+
+Lists available medicines with details.
+
+Users can check availability and request medicine delivery (if applicable).
+
+Users can choose to send prescriptions to pharmacy after consultation.
+
+About:
+
+Information about the hospital, mission, and values.
+
+Contact details, address, and operating hours.
+
+Footer:
+
+Contains contact information, social media links, privacy policy, and terms & conditions.
+
+Appointment & Consultation Workflow:
+
+User selects a doctor from the Doctors section.
+
+User creates an appointment for the chosen doctor.
+
+Payment is required after appointment creation:
+
+Doctor consultation fee (as per doctor’s profile).
+
+Additional hospital service fee: 500 LKR.
+
+After payment:
+
+The patient is added to the relevant queue.
+
+The patient receives a queue number and a video consultation URL.
+
+Doctor consults patients one by one based on the queue.
+
+After the consultation:
+
+Doctor generates a prescription.
+
+Patient can download the prescription.
+
+Patient can optionally send prescription details to the hospital pharmacy for medicine.
+
+What Users Can Do:
+
+Search for doctors by specialization.
+
+Book, cancel, or reschedule appointments.
+
+Check consultation fees and available times.
+
+Access pharmacy information and send prescriptions.
+
+Update personal profile information.
+
+See queue number and join video consultation with the doctor.
+
+Navigate easily using the navbar.
+
+Access contact information and hospital details via footer.
+
+Constraints for AI:
+
+Always answer based on this website knowledge.
+
+If a question asks about UI, navigation, or workflow, provide clear instructions on which section to use and the next steps.
+
+Keep answers concise and user-friendly.
+
+Never make up features not described in this document.
+
+Sample Questions AI Should Handle:
+
+“How can I book an appointment with a neurologist?”
+
+“Where can I see my upcoming appointments and payment status?”
+
+“How do I update my profile?”
+
+“Which section shows pharmacy details?”
+
+“How can I pay for my appointment?”
+
+“Where do I get my queue number and video consultation URL?”
+
+“How can I download my prescription after consultation?”
+
+“Can I send my prescription to the hospital pharmacy?”
