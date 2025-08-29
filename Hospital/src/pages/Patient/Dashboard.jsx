@@ -5,14 +5,14 @@ import { Calendar, Video, Clock, User, Pill, Package, CheckCircle, Plus, ArrowRi
 // NOTE: Your sub-components (AppointmentCard, CompletedAppointmentCard, etc.) do not need any changes.
 
 // Enhanced Appointment Card Component
-const AppointmentCard = ({ doctor, time, date, type = "Online", url = "https://meet.jit.si/h" }) => {
+const AppointmentCard = ({aid, doctor, time, date, type = "Online", url = "https://meet.jit.si/h" }) => {
   const doctorName = doctor.name;
   const specialty = doctor.specialization;
   const navigate = useNavigate();
 
   const handleJoin = () => {
     navigate(`/video-conference/${doctorName}`, {
-      state: { doctor, url },
+      state: { url,did:doctor.did,date,time,aid },
     });
   };
 
@@ -47,7 +47,7 @@ const AppointmentCard = ({ doctor, time, date, type = "Online", url = "https://m
           className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
         >
           <Video className="w-4 h-4" />
-          <span className="font-medium">Join</span>
+          <span className="font-medium">Queue</span>
         </button>
       </div>
     </div>

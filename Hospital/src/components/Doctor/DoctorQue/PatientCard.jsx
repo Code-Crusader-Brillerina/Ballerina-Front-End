@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FaNotesMedical } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-const PatientCard = ({ patient }) => {
+
+const PatientCard = ({ patient,uidList }) => {
   const navigate = useNavigate();
 
   const handleViewReports = () => {
@@ -54,7 +56,8 @@ const PatientCard = ({ patient }) => {
       navigate("/doctor/patient-details", {
         state: { 
           aid: appointmentId,
-          patient: patient
+          patient: patient,
+          uidList
         },
       });
     } catch (error) {
@@ -128,7 +131,7 @@ const PatientCard = ({ patient }) => {
               {appointmentData.time || queData.time || patient.time || patient.appointmentTime || 'No time set'}
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              ID: {userData.uid || userData.id || patient.patientId || patient.id || 'No ID'}
+              ID: { userData.uid ||  patient.patientId || 'No ID'}
             </div>
             <div className="text-xs text-gray-500 mt-1">
               Queue: #{appointmentData.number || queData.number || 'N/A'}
