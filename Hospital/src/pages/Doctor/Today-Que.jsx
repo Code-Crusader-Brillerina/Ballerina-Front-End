@@ -5,6 +5,7 @@ import StatsSection from "../../components/Doctor/DoctorQue/StatsSection";
 import PatientFilters from "../../components/Doctor/DoctorQue/PatientFilters";
 import PatientCard from "../../components/Doctor/DoctorQue/PatientCard";
 
+
 const TodayQue = () => {
   const [date, setDate] = useState(new Date());
   const [activeFilter, setActiveFilter] = useState("all");
@@ -15,11 +16,13 @@ const TodayQue = () => {
   const [error, setError] = useState(null);
   const [currentTimeSlot, setCurrentTimeSlot] = useState("morning");
 
+  const [uidList, setUidList] = useState(false);
+
   // Helper function to format date to YYYY-MM-DD
   const formatDate = (date) => {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
@@ -27,7 +30,7 @@ const TodayQue = () => {
   const getCurrentTimeSlot = () => {
     const now = new Date();
     const hour = now.getHours();
-    
+
     // You can adjust these time ranges based on your clinic's schedule
     if (hour >= 3 && hour < 12) {
       return "morning";
@@ -54,12 +57,17 @@ const TodayQue = () => {
 
   // Helper function to map API status to display status (UPDATED for new structure)
   const mapApiStatusToDisplay = (apiStatus) => {
-    switch(apiStatus) {
-      case 'pending': return 'waiting';
-      case 'scheduled': return 'waiting'; // NEW: Handle 'scheduled' status
-      case 'in-progress': return 'in-progress';
-      case 'completed': return 'completed';
-      default: return 'waiting';
+    switch (apiStatus) {
+      case "pending":
+        return "waiting";
+      case "scheduled":
+        return "waiting"; // NEW: Handle 'scheduled' status
+      case "in-progress":
+        return "in-progress";
+      case "completed":
+        return "completed";
+      default:
+        return "waiting";
     }
   };
 
@@ -68,7 +76,7 @@ const TodayQue = () => {
     try {
       setSinglePatientLoading(true);
       setError(null);
-      
+
       const response = await fetch("http://localhost:8080/patient/getPatient", {
         method: "GET",
         headers: {
@@ -88,29 +96,33 @@ const TodayQue = () => {
         const transformedPatient = {
           // Spread the original item
           ...apiData.data,
-          
+
           // Map user data for easier access
-          name: apiData.data.user?.username || 'Unknown Patient',
-          username: apiData.data.user?.username || 'Unknown',
-          phoneNumber: apiData.data.user?.phoneNumber || 'No phone',
-          address: `${apiData.data.user?.city || 'Unknown city'}, ${apiData.data.user?.district || 'Unknown district'}`,
-          patientId: apiData.data.user?.uid || 'No ID',
-          image: apiData.data.user?.profilepic || "https://via.placeholder.com/64x64/20B2AA/FFFFFF?text=Patient",
-          university: apiData.data.user?.email || 'No email',
-          
+          name: apiData.data.user?.username || "Unknown Patient",
+          username: apiData.data.user?.username || "Unknown",
+          phoneNumber: apiData.data.user?.phoneNumber || "No phone",
+          address: `${apiData.data.user?.city || "Unknown city"}, ${
+            apiData.data.user?.district || "Unknown district"
+          }`,
+          patientId: apiData.data.user?.uid || "No ID",
+          image:
+            apiData.data.user?.profilepic ||
+            "https://via.placeholder.com/64x64/20B2AA/FFFFFF?text=Patient",
+          university: apiData.data.user?.email || "No email",
+
           // Additional patient-specific data from the 'patient' object (note: it was 'partient' in your old code)
-          pid: apiData.data.patient?.pid || 'No PID',
-          dateOfBirth: apiData.data.patient?.DOB || 'No DOB',
-          gender: apiData.data.patient?.gender || 'Unknown',
-          
+          pid: apiData.data.patient?.pid || "No PID",
+          dateOfBirth: apiData.data.patient?.DOB || "No DOB",
+          gender: apiData.data.patient?.gender || "Unknown",
+
           // Keep original nested structure for reference
           user: apiData.data.user,
-          patient: apiData.data.patient
+          patient: apiData.data.patient,
         };
 
         setSinglePatient(transformedPatient);
       } else {
-        throw new Error(apiData.message || 'Failed to fetch patient data');
+        throw new Error(apiData.message || "Failed to fetch patient data");
       }
     } catch (error) {
       console.error("Error fetching single patient data:", error);
@@ -127,16 +139,17 @@ const TodayQue = () => {
       try {
         setLoading(true);
         const formattedDate = formatDate(date);
+        console.log(formattedDate);
         const timeSlot = getCurrentTimeSlot(); // Get current time slot
-        
+
         const response = await fetch("http://localhost:8080/doctor/getQueue", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ 
-            date: formattedDate, 
-            time: timeSlot // Use dynamic time slot
+          body: JSON.stringify({
+            date: "2025-08-29",
+            time: "morning", // Use dynamic time slot
           }),
           credentials: "include",
         });
@@ -149,21 +162,25 @@ const TodayQue = () => {
 
         // Ensure we have data and it's an array
         const patientList = Array.isArray(apiData.data) ? apiData.data : [];
-        
+
         // Transform the data to match what the component expects (UPDATED for new structure)
-        const transformedPatients = patientList.map(item => ({
+        const transformedPatients = patientList.map((item) => ({
           // Flatten the structure and add computed properties
           ...item,
           // Map user data for easier access
-          name: item.user?.username || 'Unknown Patient',
-          username: item.user?.username || 'Unknown',
-          phoneNumber: item.user?.phoneNumber || 'No phone',
-          address: `${item.user?.city || 'Unknown city'}, ${item.user?.district || 'Unknown district'}`,
-          patientId: item.user?.uid || 'No ID',
-          image: item.user?.profilepic || "https://via.placeholder.com/64x64/20B2AA/FFFFFF?text=Patient",
-          university: item.user?.email || 'No email',
+          name: item.user?.username || "Unknown Patient",
+          username: item.user?.username || "Unknown",
+          phoneNumber: item.user?.phoneNumber || "No phone",
+          address: `${item.user?.city || "Unknown city"}, ${
+            item.user?.district || "Unknown district"
+          }`,
+          patientId: item.user?.uid || "No ID",
+          image:
+            item.user?.profilepic ||
+            "https://via.placeholder.com/64x64/20B2AA/FFFFFF?text=Patient",
+          university: item.user?.email || "No email",
           // Map appointment data (UPDATED: use appointment instead of queData)
-          time: item.appointment?.time || 'No time set',
+          time: item.appointment?.time || "No time set",
           status: mapApiStatusToDisplay(item.appointment?.status),
           appointmentId: item.appointment?.aid, // NEW: Direct access to appointment ID
           // Keep original nested structure for navigation
@@ -171,10 +188,14 @@ const TodayQue = () => {
           patient: item.patient, // NEW: patient data
           user: item.user,
           // Keep queData for backward compatibility if it exists
-          queData: item.queData
+          queData: item.queData,
         }));
-        
+
         setPatients(transformedPatients);
+        console.log(transformedPatients);
+
+        const patientIds = transformedPatients.map(p => p.patientId);
+        setUidList(patientIds);
       } catch (error) {
         console.error("Error fetching patient queue:", error);
         setPatients([]);
@@ -186,20 +207,22 @@ const TodayQue = () => {
     fetchPatients();
   }, [date, currentTimeSlot]); // Add currentTimeSlot as dependency
 
+  
   // Manual time slot selector (optional - for testing or manual override)
   const handleTimeSlotChange = (timeSlot) => {
     setCurrentTimeSlot(timeSlot);
   };
 
   // Update filtering to work with both original API status and display status
-  const filteredPatients = activeFilter === "all"
-    ? patients
-    : Array.isArray(patients)
-    ? patients.filter((p) => {
-        // Filter by display status for UI filters
-        return p.status === activeFilter;
-      })
-    : [];
+  const filteredPatients =
+    activeFilter === "all"
+      ? patients
+      : Array.isArray(patients)
+      ? patients.filter((p) => {
+          // Filter by display status for UI filters
+          return p.status === activeFilter;
+        })
+      : [];
 
   if (loading) {
     return (
@@ -232,12 +255,14 @@ const TodayQue = () => {
       <div className="mb-6 bg-white rounded-lg shadow-md p-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
           <div className="mb-3 sm:mb-0">
-            <h3 className="text-lg font-semibold text-teal-900">Current Session</h3>
+            <h3 className="text-lg font-semibold text-teal-900">
+              Current Session
+            </h3>
             <p className="text-teal-700 capitalize">
               {currentTimeSlot} Session - {new Date().toLocaleTimeString()}
             </p>
           </div>
-          
+
           {/* Manual Time Slot Selector */}
           <div className="flex gap-2">
             <button
@@ -250,7 +275,7 @@ const TodayQue = () => {
             >
               Morning
             </button>
-            
+
             <button
               onClick={() => handleTimeSlotChange("evening")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -284,22 +309,25 @@ const TodayQue = () => {
 
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-teal-900 mb-4">
-          Today's Queue - {currentTimeSlot.charAt(0).toUpperCase() + currentTimeSlot.slice(1)} Session
+          Today's Queue -{" "}
+          {currentTimeSlot.charAt(0).toUpperCase() + currentTimeSlot.slice(1)}{" "}
+          Session
         </h2>
         {filteredPatients.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredPatients.map((patient, index) => (
-              <PatientCard 
-                key={patient.appointment?.aid || patient.user?.uid || index} 
-                patient={patient} 
+              <PatientCard
+                key={patient.appointment?.aid || patient.user?.uid || index}
+                patient={patient}
+                uidList={uidList}
               />
             ))}
           </div>
         ) : (
           <div className="text-center py-8">
             <p className="text-teal-700 text-lg">
-              {patients.length === 0 
-                ? `No patients scheduled for ${currentTimeSlot} session on this date.` 
+              {patients.length === 0
+                ? `No patients scheduled for ${currentTimeSlot} session on this date.`
                 : "No patients found for this filter."}
             </p>
           </div>

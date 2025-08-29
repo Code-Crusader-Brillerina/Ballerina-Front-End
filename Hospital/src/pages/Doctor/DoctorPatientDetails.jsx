@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import PatientHeader from "../../components/Doctor/DoctorPatientDetails/PatientHeader";
 import PatientDetailsTab from "../../components/Doctor/DoctorPatientDetails/PatientDetailsTab";
 import MedicalReportsTab from "../../components/Doctor/DoctorPatientDetails/MedicalReportsTab";
+import axios from "axios";
 import PrescriptionCard from "../../components/Doctor/DoctorPatientDetails/PrescriptionCard";
 
 const DoctorPatientDetails = () => {
@@ -14,10 +15,14 @@ const DoctorPatientDetails = () => {
   const [error, setError] = useState(null);
   const [finishingAppointment, setFinishingAppointment] = useState(false);
 
+  const [socket, setSocket] = useState(null);
+  const [uid, setuid] = useState("");
+  const [connected, setConnected] = useState(false);
+
   // Navigation and Location
   const navigate = useNavigate();
   const location = useLocation();
-  const { aid, patient } = location.state || {};
+  const { aid, patient, uidList } = location.state || {};
 
   // API Configuration
   const API_BASE_URL = "http://localhost:8080";
@@ -28,16 +33,76 @@ const DoctorPatientDetails = () => {
   // Effects
   useEffect(() => {
     console.log("aid:", aid);
-    
+
     if (!aid) {
       console.error("❌ No appointment ID provided");
       setError("No appointment ID provided");
       setTimeout(() => navigate("/doctor/today-que"), 2000);
       return;
     }
-    
+
     fetchAppointmentData();
   }, [aid, navigate]);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/user/getUser", {
+          withCredentials: true, // 👈 send cookies
+        });
+
+        console.log(response.data);
+        setuid(response.data.data.uid);
+      } catch (err) {
+        console.error("Error fetching user:", err);
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  // WebSocket to listen for completed patients
+  useEffect(() => {
+    const ws = new WebSocket("ws://10.10.5.3:9090/ws");
+
+    ws.onopen = () => {
+      console.log("🔗 Connected to server");
+      setConnected(true);
+
+      // Automatically send UID once socket is open
+      if (uid && ws.readyState === WebSocket.OPEN) {
+        ws.send(
+          JSON.stringify({
+            message: "doctorConnecting",
+            uid,
+            uidList: [],
+            completedAid: "",
+          })
+        );
+        console.log("✅ Sent UID to server:", uid);
+      }
+    };
+
+    ws.onmessage = (event) => {
+      const completedAid = event.data; // treat it as string directly
+
+      setQueueData((prev) =>
+        prev.map((q) =>
+          q.aid === completedAid ? { ...q, status: "completed" } : q
+        )
+      );
+    };
+
+    ws.onclose = () => {
+      console.log("❌ Connection closed");
+      setConnected(false);
+    };
+
+    setSocket(ws);
+  }, [uid]);
 
   useEffect(() => {
     if (appointmentData && patientId) {
@@ -70,14 +135,15 @@ const DoctorPatientDetails = () => {
         if (result.data) {
           // Set the entire result.data object which contains appointment, patient, and user
           setAppointmentData(result.data);
-          
+
           // Extract patient ID from the correct location
-          const extractedPatientId = result.data.patient?.pid || 
-                                   result.data.user?.uid ||
-                                   result.data.appointment?.pid;
-          
+          const extractedPatientId =
+            result.data.patient?.pid ||
+            result.data.user?.uid ||
+            result.data.appointment?.pid;
+
           setPatientId(extractedPatientId);
-          
+
           if (!extractedPatientId) {
             console.error("⚠️ No patient ID found in response");
           }
@@ -86,9 +152,13 @@ const DoctorPatientDetails = () => {
           // Fallback logic remains the same...
           if (patient) {
             setAppointmentData({
-              appointment: { aid: aid, pid: patient.user?.uid || patient.patientId, status: patient.status || 'pending' },
+              appointment: {
+                aid: aid,
+                pid: patient.user?.uid || patient.patientId,
+                status: patient.status || "pending",
+              },
               patient: patient.patient || {},
-              user: patient.user || {}
+              user: patient.user || {},
             });
             setPatientId(patient.user?.uid || patient.patientId);
           } else {
@@ -98,18 +168,23 @@ const DoctorPatientDetails = () => {
       } else {
         // Error handling remains the same...
         const message = result.message || "Unknown error occurred";
-        
-        if (message.toLowerCase().includes("success") || 
-            message.toLowerCase().includes("found")) {
-          
+
+        if (
+          message.toLowerCase().includes("success") ||
+          message.toLowerCase().includes("found")
+        ) {
           if (result.data) {
             setAppointmentData(result.data);
             setPatientId(result.data.patient?.pid || result.data.user?.uid);
           } else if (patient) {
             setAppointmentData({
-              appointment: { aid: aid, pid: patient.user?.uid || patient.patientId, status: patient.status || 'pending' },
+              appointment: {
+                aid: aid,
+                pid: patient.user?.uid || patient.patientId,
+                status: patient.status || "pending",
+              },
               patient: patient.patient || {},
-              user: patient.user || {}
+              user: patient.user || {},
             });
             setPatientId(patient.user?.uid || patient.patientId);
           }
@@ -122,16 +197,20 @@ const DoctorPatientDetails = () => {
       console.error("Error details:", {
         name: error.name,
         message: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
       setError(`Failed to fetch appointment data: ${error.message}`);
-      
+
       // Emergency fallback remains the same...
       if (patient && !appointmentData) {
         setAppointmentData({
-          appointment: { aid: aid, pid: patient.user?.uid || patient.patientId, status: patient.status || 'pending' },
+          appointment: {
+            aid: aid,
+            pid: patient.user?.uid || patient.patientId,
+            status: patient.status || "pending",
+          },
           patient: patient.patient || {},
-          user: patient.user || {}
+          user: patient.user || {},
         });
         setPatientId(patient.user?.uid || patient.patientId);
         setError(null);
@@ -141,35 +220,53 @@ const DoctorPatientDetails = () => {
     }
   };
 
+  const sendUpdate =async () => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(
+        JSON.stringify({
+          message: "updatingQueue",
+          uid,
+          uidList: uidList,
+          completedAid: aid,
+        })
+      );
+    }
+  };
+
   // New function to finish appointment
   const finishAppointment = async () => {
     try {
       setFinishingAppointment(true);
 
-      const response = await fetch(`${API_BASE_URL}/doctor/updateAppoinmentStatus`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          aid: aid,
-          status: "completed"
-        }),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/doctor/updateAppoinmentStatus`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            aid: aid,
+            status: "completed",
+          }),
+        }
+      );
+      await sendUpdate();
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      
+
       if (result.success === true || result.success === "true") {
         console.log("✅ Appointment finished successfully");
         // Navigate back to queue after successful update
         handleViewFullProfile();
       } else {
-        throw new Error(result.message || "Failed to update appointment status");
+        throw new Error(
+          result.message || "Failed to update appointment status"
+        );
       }
-
     } catch (error) {
       console.error("❌ Error finishing appointment:", error);
       alert(`Failed to finish appointment: ${error.message}`);
@@ -180,8 +277,9 @@ const DoctorPatientDetails = () => {
 
   // Event Handlers
   const handleAddPrescription = () => {
-    const appointmentId = appointmentData?.appointment?.aid || appointmentData?.aid;
-    
+    const appointmentId =
+      appointmentData?.appointment?.aid || appointmentData?.aid;
+
     if (!patientId || !appointmentId) {
       console.error("❌ Missing patient or appointment information");
       alert("Missing patient or appointment information");
@@ -241,10 +339,10 @@ const DoctorPatientDetails = () => {
                   appointment: {
                     aid: aid,
                     pid: patient.user?.uid || patient.patientId,
-                    status: patient.status || 'pending'
+                    status: patient.status || "pending",
                   },
                   patient: patient.patient || {},
-                  user: patient.user || {}
+                  user: patient.user || {},
                 });
                 setPatientId(patient.user?.uid || patient.patientId);
                 setError(null);
@@ -264,8 +362,8 @@ const DoctorPatientDetails = () => {
     <div className="flex border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
       {[
         { id: "details", label: "Patient Details" },
-        { id: "reports", label: "Medical Reports" }
-      ].map(tab => (
+        { id: "reports", label: "Medical Reports" },
+      ].map((tab) => (
         <button
           key={tab.id}
           onClick={() => setActiveTab(tab.id)}
@@ -283,15 +381,19 @@ const DoctorPatientDetails = () => {
 
   // Patient Info Card
   const PatientInfoCard = () => {
-    const appointmentId = appointmentData?.appointment?.aid || appointmentData?.aid;
-    const status = appointmentData?.appointment?.status || appointmentData?.status;
-    
+    const appointmentId =
+      appointmentData?.appointment?.aid || appointmentData?.aid;
+    const status =
+      appointmentData?.appointment?.status || appointmentData?.status;
+
     return (
       <div className="mb-6 bg-white rounded-lg shadow-md p-4">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-sm text-gray-500">Patient ID:</span>
-            <span className="ml-2 text-lg font-semibold text-blue-600">{patientId}</span>
+            <span className="ml-2 text-lg font-semibold text-blue-600">
+              {patientId}
+            </span>
           </div>
           <div className="text-sm text-gray-500">
             Appointment: {appointmentId} | Status: {status}
@@ -299,7 +401,8 @@ const DoctorPatientDetails = () => {
         </div>
         {/* Debug info - remove in production */}
         <div className="mt-2 text-xs text-gray-400">
-          Debug: aid={aid}, hasAppointmentData={!!appointmentData}, hasPatientFallback={!!patient}
+          Debug: aid={aid}, hasAppointmentData={!!appointmentData},
+          hasPatientFallback={!!patient}
         </div>
       </div>
     );
@@ -312,11 +415,9 @@ const DoctorPatientDetails = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-indigo-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        
-
         {/* Patient Header */}
-        <PatientHeader 
-          appointmentData={appointmentData} 
+        <PatientHeader
+          appointmentData={appointmentData}
           patientId={patientId}
           fallbackPatient={patient}
         />
@@ -332,8 +433,8 @@ const DoctorPatientDetails = () => {
               <TabNavigation />
               <div className="p-6">
                 {activeTab === "details" && (
-                  <PatientDetailsTab 
-                    appointmentData={appointmentData} 
+                  <PatientDetailsTab
+                    appointmentData={appointmentData}
                     patientId={patientId}
                     fallbackPatient={patient}
                   />
@@ -342,7 +443,10 @@ const DoctorPatientDetails = () => {
                   <MedicalReportsTab
                     appointmentData={appointmentData}
                     patientId={patientId}
-                    reports={appointmentData?.appointment?.reports || appointmentData?.reports}
+                    reports={
+                      appointmentData?.appointment?.reports ||
+                      appointmentData?.reports
+                    }
                     fallbackPatient={patient}
                   />
                 )}
@@ -352,8 +456,8 @@ const DoctorPatientDetails = () => {
 
           {/* Right Column - Prescription Card */}
           <div className="space-y-6">
-            <PrescriptionCard 
-              onAdd={handleAddPrescription} 
+            <PrescriptionCard
+              onAdd={handleAddPrescription}
               pid={patientId}
               appointmentData={appointmentData}
             />
@@ -373,10 +477,10 @@ const DoctorPatientDetails = () => {
                 Finishing...
               </>
             ) : (
-              'Finish Appointment'
+              "Finish Appointment"
             )}
           </button>
-          
+
           <button
             className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-3 rounded-3xl font-semibold text-lg shadow-lg hover:from-indigo-700 hover:to-blue-700 transition"
             onClick={handleViewFullProfile}
