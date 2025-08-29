@@ -53,9 +53,9 @@ const AdminPatient = () => {
 
   // Enhanced filtering based on search filter selection
   const filteredPatients = useMemo(() => {
-    if (!searchTerm) return patientsData;
+    if (!searchTerm.trim()) return patientsData;
     
-    const term = searchTerm.toLowerCase();
+    const term = searchTerm.toLowerCase().trim();
     
     return patientsData.filter(patient => {
       switch (searchFilter) {
@@ -79,21 +79,92 @@ const AdminPatient = () => {
     });
   }, [searchTerm, patientsData, searchFilter]);
 
-  const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
+  // Reset to first page when search term or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, searchFilter]);
+
+  // Fixed pagination calculations
+  const totalPages = Math.max(1, Math.ceil(filteredPatients.length / itemsPerPage));
+  
+  // Ensure currentPage is within valid range
+  const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  
+  // Update currentPage if it's out of range
+  useEffect(() => {
+    if (currentPage !== validCurrentPage) {
+      setCurrentPage(validCurrentPage);
+    }
+  }, [currentPage, validCurrentPage]);
+
+  // Fixed current patients calculation
   const currentPatients = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredPatients.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredPatients, currentPage, itemsPerPage]);
+    const startIndex = (validCurrentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredPatients.slice(startIndex, endIndex);
+  }, [filteredPatients, validCurrentPage, itemsPerPage]);
 
   const handlePageChange = (pageNumber) => {
-    if (pageNumber > 0 && pageNumber <= totalPages) {
-      setCurrentPage(pageNumber);
+    const newPage = Math.min(Math.max(1, pageNumber), totalPages);
+    if (newPage !== currentPage) {
+      setCurrentPage(newPage);
+      // Scroll to top of table when page changes
+      setTimeout(() => {
+        document.querySelector('.overflow-x-auto')?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 50);
     }
   };
 
-  const handleDelete = (patient) => {
+  const handleDelete = async (patient) => {
     if (window.confirm(`Are you sure you want to delete patient ${patient.userData?.username}?`)) {
-      console.log('Delete patient:', patient);
+      try {
+        // Add actual delete API call here
+        console.log('Delete patient:', patient);
+        
+        // For now, just remove from local state (replace with actual API call)
+        const newPatientsData = patientsData.filter(p => p.pid !== patient.pid);
+        setPatientsData(newPatientsData);
+        
+        // Calculate new pagination after deletion
+        const filteredAfterDelete = searchTerm 
+          ? newPatientsData.filter(p => {
+              const term = searchTerm.toLowerCase().trim();
+              switch (searchFilter) {
+                case 'name':
+                  return p.userData?.username?.toLowerCase().includes(term);
+                case 'email':
+                  return p.userData?.email?.toLowerCase().includes(term);
+                case 'phone':
+                  return p.userData?.phoneNumber?.toLowerCase().includes(term);
+                case 'id':
+                  return p.pid?.toLowerCase().includes(term);
+                case 'all':
+                default:
+                  return (
+                    p.userData?.username?.toLowerCase().includes(term) ||
+                    p.userData?.email?.toLowerCase().includes(term) ||
+                    p.userData?.phoneNumber?.toLowerCase().includes(term) ||
+                    p.pid?.toLowerCase().includes(term)
+                  );
+              }
+            })
+          : newPatientsData;
+        
+        const newTotalPages = Math.ceil(filteredAfterDelete.length / itemsPerPage);
+        
+        // Adjust current page if necessary
+        if (currentPage > newTotalPages && newTotalPages > 0) {
+          setCurrentPage(newTotalPages);
+        } else if (newTotalPages === 0) {
+          setCurrentPage(1);
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error('Error deleting patient:', err);
+      }
     }
   };
 
@@ -103,6 +174,7 @@ const AdminPatient = () => {
 
   const clearSearch = () => {
     setSearchTerm('');
+    setSearchFilter('all');
     setCurrentPage(1);
   };
 
@@ -110,6 +182,10 @@ const AdminPatient = () => {
     setSearchFilter(filter);
     setCurrentPage(1);
   };
+
+  // Pagination info calculations
+  const startIndex = filteredPatients.length === 0 ? 0 : (validCurrentPage - 1) * itemsPerPage + 1;
+  const endIndex = Math.min(validCurrentPage * itemsPerPage, filteredPatients.length);
 
   // Loading state
   if (loading) {
@@ -200,7 +276,6 @@ const AdminPatient = () => {
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
-                setCurrentPage(1);
               }}
             />
             {searchTerm && (
@@ -225,12 +300,19 @@ const AdminPatient = () => {
         )}
       </div>
 
-      {/* Statistics */}
+      {/* Statistics and Results Info */}
       <div className="mb-6">
         <div className="text-sm text-gray-600">
           Total Patients: <span className="font-semibold text-blue-600">{patientsData.length}</span>
-          {searchTerm && (
-            <span> | Showing: <span className="font-semibold text-green-600">{filteredPatients.length}</span></span>
+          {filteredPatients.length > 0 && (
+            <span> | Showing: <span className="font-semibold text-green-600">
+              {startIndex} to {endIndex} of {filteredPatients.length}
+            </span></span>
+          )}
+          {totalPages > 1 && (
+            <span> | Page: <span className="font-semibold text-purple-600">
+              {validCurrentPage} of {totalPages}
+            </span></span>
           )}
         </div>
       </div>
@@ -269,7 +351,7 @@ const AdminPatient = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {currentPatients.length > 0 ? (
               currentPatients.map((patient, index) => (
-                <tr key={patient.pid || index} className="hover:bg-gray-50 transition-colors">
+                <tr key={`${patient.pid}-${validCurrentPage}-${index}`} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
                     {patient.pid || 'N/A'}
                   </td>
@@ -319,7 +401,13 @@ const AdminPatient = () => {
                       <div>
                         <Search className="h-8 w-8 mx-auto mb-2 text-gray-300" />
                         <p className="text-lg font-medium">No patients found</p>
-                        <p className="text-sm">Try adjusting your search terms or filters</p>
+                        <p className="text-sm">No patients match "{searchTerm}" in {searchFilter === 'all' ? 'any field' : searchFilter}</p>
+                        <button
+                          onClick={clearSearch}
+                          className="mt-2 text-blue-600 hover:text-blue-700 text-sm underline"
+                        >
+                          Clear search
+                        </button>
                       </div>
                     ) : (
                       <div>
@@ -335,49 +423,145 @@ const AdminPatient = () => {
         </table>
       </div>
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center mt-8 space-x-2">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-          {[...Array(Math.min(totalPages, 7))].map((_, i) => {
-            let pageNumber;
-            if (totalPages <= 7) {
-              pageNumber = i + 1;
-            } else if (currentPage <= 4) {
-              pageNumber = i + 1;
-            } else if (currentPage >= totalPages - 3) {
-              pageNumber = totalPages - 6 + i;
-            } else {
-              pageNumber = currentPage - 3 + i;
-            }
-
-            return (
+      {/* Enhanced Pagination Controls */}
+      {filteredPatients.length > 0 && totalPages > 1 && (
+        <div className="mt-8">
+          {/* Pagination Info */}
+          <div className="flex flex-col md:flex-row justify-between items-center mb-4">
+            <div className="text-sm text-gray-600 mb-4 md:mb-0">
+              Page {validCurrentPage} of {totalPages} ({filteredPatients.length} total patients)
+            </div>
+            
+            {/* Pagination Buttons */}
+            <div className="flex justify-center items-center space-x-2">
+              {/* First Page Button */}
               <button
-                key={pageNumber}
-                onClick={() => handlePageChange(pageNumber)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                  currentPage === pageNumber
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                }`}
+                onClick={() => handlePageChange(1)}
+                disabled={validCurrentPage === 1}
+                className="px-3 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="First Page"
               >
-                {pageNumber}
+                ««
               </button>
-            );
-          })}
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
+              
+              {/* Previous Button */}
+              <button
+                onClick={() => handlePageChange(validCurrentPage - 1)}
+                disabled={validCurrentPage === 1}
+                className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+
+              {/* Page Numbers */}
+              {(() => {
+                const pageNumbers = [];
+                const maxVisiblePages = 5;
+                let startPage = Math.max(1, validCurrentPage - Math.floor(maxVisiblePages / 2));
+                let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                
+                // Adjust startPage if we're near the end
+                if (endPage - startPage < maxVisiblePages - 1) {
+                  startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                }
+
+                // Add first page and ellipsis if needed
+                if (startPage > 1) {
+                  pageNumbers.push(
+                    <button
+                      key={1}
+                      onClick={() => handlePageChange(1)}
+                      className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors"
+                    >
+                      1
+                    </button>
+                  );
+                  if (startPage > 2) {
+                    pageNumbers.push(
+                      <span key="ellipsis1" className="px-2 py-2 text-gray-500">...</span>
+                    );
+                  }
+                }
+
+                // Add visible page numbers
+                for (let i = startPage; i <= endPage; i++) {
+                  pageNumbers.push(
+                    <button
+                      key={i}
+                      onClick={() => handlePageChange(i)}
+                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                        validCurrentPage === i
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                      }`}
+                    >
+                      {i}
+                    </button>
+                  );
+                }
+
+                // Add last page and ellipsis if needed
+                if (endPage < totalPages) {
+                  if (endPage < totalPages - 1) {
+                    pageNumbers.push(
+                      <span key="ellipsis2" className="px-2 py-2 text-gray-500">...</span>
+                    );
+                  }
+                  pageNumbers.push(
+                    <button
+                      key={totalPages}
+                      onClick={() => handlePageChange(totalPages)}
+                      className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors"
+                    >
+                      {totalPages}
+                    </button>
+                  );
+                }
+
+                return pageNumbers;
+              })()}
+
+              {/* Next Button */}
+              <button
+                onClick={() => handlePageChange(validCurrentPage + 1)}
+                disabled={validCurrentPage === totalPages}
+                className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+              
+              {/* Last Page Button */}
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                disabled={validCurrentPage === totalPages}
+                className="px-3 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Last Page"
+              >
+                »»
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Page Jump */}
+          {totalPages > 10 && (
+            <div className="flex justify-center items-center space-x-2 text-sm">
+              <span className="text-gray-600">Go to page:</span>
+              <input
+                type="number"
+                min="1"
+                max={totalPages}
+                value={validCurrentPage}
+                onChange={(e) => {
+                  const page = parseInt(e.target.value);
+                  if (!isNaN(page) && page >= 1 && page <= totalPages) {
+                    handlePageChange(page);
+                  }
+                }}
+                className="w-16 px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-center"
+              />
+              <span className="text-gray-600">of {totalPages}</span>
+            </div>
+          )}
         </div>
       )}
     </div>

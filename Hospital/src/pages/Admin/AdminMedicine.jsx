@@ -11,7 +11,7 @@ const AdminMedicine = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  const itemsPerPage = 8;
+  const itemsPerPage = 10;
 
   // Fetch medicines function
   const fetchMedicines = async () => {
@@ -21,13 +21,12 @@ const AdminMedicine = () => {
       
       const response = await fetch('http://localhost:8080/admin/getAllMedicines', {
         method: 'GET',
-        credentials: 'include', // Include cookies for JWT authentication
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
       });
       
-      // Check if response is ok
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -74,6 +73,8 @@ const AdminMedicine = () => {
           setIsModalOpen(false);
           // Refresh the medicines list
           await fetchMedicines();
+          // Reset to first page to show the newly added medicine
+          setCurrentPage(1);
         } else {
           throw new Error(result.message || 'Failed to add medicine');
         }
@@ -87,7 +88,6 @@ const AdminMedicine = () => {
   };
 
   const handleEditMedicine = (medicine) => {
-    // Implement edit functionality
     console.log('Editing medicine:', medicine);
   };
 
@@ -106,8 +106,24 @@ const AdminMedicine = () => {
           const result = await response.json();
           if (result.success) {
             console.log('Medicine deleted successfully');
-            // Refresh the medicines list
-            await fetchMedicines();
+            // Update local state immediately to avoid refetch
+            const newMedicinesData = medicinesData.filter(med => med.mediId !== medicineId);
+            setMedicinesData(newMedicinesData);
+            
+            // Calculate new pagination after deletion
+            const filteredAfterDelete = searchTerm 
+              ? newMedicinesData.filter(medicine => 
+                  medicine.name?.toLowerCase().includes(searchTerm.toLowerCase()))
+              : newMedicinesData;
+            
+            const newTotalPages = Math.ceil(filteredAfterDelete.length / itemsPerPage);
+            
+            // Adjust current page if necessary
+            if (currentPage > newTotalPages && newTotalPages > 0) {
+              setCurrentPage(newTotalPages);
+            } else if (newTotalPages === 0) {
+              setCurrentPage(1);
+            }
           } else {
             throw new Error(result.message || 'Failed to delete medicine');
           }
@@ -121,25 +137,56 @@ const AdminMedicine = () => {
     }
   };
 
-  // Updated filteredMedicines to search ONLY by name
+  // Fixed filteredMedicines calculation
   const filteredMedicines = useMemo(() => {
-    if (!searchTerm) return medicinesData;
+    if (!searchTerm.trim()) return medicinesData;
     return medicinesData.filter(medicine =>
-      medicine.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      medicine.name?.toLowerCase().includes(searchTerm.toLowerCase().trim())
     );
   }, [searchTerm, medicinesData]);
 
-  const totalPages = Math.ceil(filteredMedicines.length / itemsPerPage);
+  // Reset to first page when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // Fixed pagination calculations
+  const totalPages = Math.max(1, Math.ceil(filteredMedicines.length / itemsPerPage));
+  
+  // Ensure currentPage is within valid range
+  const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  
+  // Update currentPage if it's out of range
+  useEffect(() => {
+    if (currentPage !== validCurrentPage) {
+      setCurrentPage(validCurrentPage);
+    }
+  }, [currentPage, validCurrentPage]);
+
+  // Fixed current medicines calculation
   const currentMedicines = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredMedicines.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredMedicines, currentPage, itemsPerPage]);
+    const startIndex = (validCurrentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredMedicines.slice(startIndex, endIndex);
+  }, [filteredMedicines, validCurrentPage, itemsPerPage]);
 
   const handlePageChange = (pageNumber) => {
-    if (pageNumber > 0 && pageNumber <= totalPages) {
-      setCurrentPage(pageNumber);
+    const newPage = Math.min(Math.max(1, pageNumber), totalPages);
+    if (newPage !== currentPage) {
+      setCurrentPage(newPage);
+      // Scroll to top of table when page changes
+      setTimeout(() => {
+        document.querySelector('.overflow-x-auto')?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 50);
     }
   };
+
+  // Fixed pagination info calculations
+  const startIndex = filteredMedicines.length === 0 ? 0 : (validCurrentPage - 1) * itemsPerPage + 1;
+  const endIndex = Math.min(validCurrentPage * itemsPerPage, filteredMedicines.length);
 
   // Loading State
   if (loading) {
@@ -200,11 +247,30 @@ const AdminMedicine = () => {
         </div>
       </div>
 
+      {/* Results Summary */}
+      {filteredMedicines.length > 0 ? (
+        <div className="mb-4 text-sm text-gray-600">
+          Showing {startIndex} to {endIndex} of {filteredMedicines.length} medicines
+          {searchTerm && ` (filtered by "${searchTerm}")`}
+        </div>
+      ) : searchTerm ? (
+        <div className="mb-4 text-sm text-gray-600">
+          No medicines found for "{searchTerm}"
+        </div>
+      ) : (
+        <div className="mb-4 text-sm text-gray-600">
+          No medicines available
+        </div>
+      )}
+
       {/* Medicine List Table */}
       <div className="overflow-x-auto">
         {currentMedicines.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            No medicines found. {searchTerm && `Try adjusting your search for "${searchTerm}".`}
+            {searchTerm 
+              ? `No medicines found matching "${searchTerm}". Try adjusting your search.`
+              : 'No medicines available. Click "Add Medicine" to get started.'
+            }
           </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
@@ -222,7 +288,7 @@ const AdminMedicine = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {currentMedicines.map((medicine, index) => (
-                <tr key={medicine.mediId || index} className="hover:bg-gray-50">
+                <tr key={`${medicine.mediId}-${validCurrentPage}-${index}`} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{medicine.name || 'N/A'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{medicine.form || 'N/A'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{medicine.strength || 'N/A'}</td>
@@ -255,36 +321,145 @@ const AdminMedicine = () => {
         )}
       </div>
       
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center mt-8 space-x-2">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Previous
-          </button>
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i + 1}
-              onClick={() => handlePageChange(i + 1)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                currentPage === i + 1
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
+      {/* Enhanced Pagination Controls - Only show if there are results */}
+      {filteredMedicines.length > 0 && totalPages > 1 && (
+        <div className="mt-8">
+          {/* Pagination Info */}
+          <div className="flex flex-col md:flex-row justify-between items-center mb-4">
+            <div className="text-sm text-gray-600 mb-4 md:mb-0">
+              Page {validCurrentPage} of {totalPages} ({filteredMedicines.length} total medicines)
+            </div>
+            
+            {/* Pagination Buttons */}
+            <div className="flex justify-center items-center space-x-2">
+              {/* First Page Button */}
+              <button
+                onClick={() => handlePageChange(1)}
+                disabled={validCurrentPage === 1}
+                className="px-3 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="First Page"
+              >
+                ««
+              </button>
+              
+              {/* Previous Button */}
+              <button
+                onClick={() => handlePageChange(validCurrentPage - 1)}
+                disabled={validCurrentPage === 1}
+                className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+
+              {/* Page Numbers */}
+              {(() => {
+                const pageNumbers = [];
+                const maxVisiblePages = 5;
+                let startPage = Math.max(1, validCurrentPage - Math.floor(maxVisiblePages / 2));
+                let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                
+                // Adjust startPage if we're near the end
+                if (endPage - startPage < maxVisiblePages - 1) {
+                  startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                }
+
+                // Add first page and ellipsis if needed
+                if (startPage > 1) {
+                  pageNumbers.push(
+                    <button
+                      key={1}
+                      onClick={() => handlePageChange(1)}
+                      className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors"
+                    >
+                      1
+                    </button>
+                  );
+                  if (startPage > 2) {
+                    pageNumbers.push(
+                      <span key="ellipsis1" className="px-2 py-2 text-gray-500">...</span>
+                    );
+                  }
+                }
+
+                // Add visible page numbers
+                for (let i = startPage; i <= endPage; i++) {
+                  pageNumbers.push(
+                    <button
+                      key={i}
+                      onClick={() => handlePageChange(i)}
+                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                        validCurrentPage === i
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                      }`}
+                    >
+                      {i}
+                    </button>
+                  );
+                }
+
+                // Add last page and ellipsis if needed
+                if (endPage < totalPages) {
+                  if (endPage < totalPages - 1) {
+                    pageNumbers.push(
+                      <span key="ellipsis2" className="px-2 py-2 text-gray-500">...</span>
+                    );
+                  }
+                  pageNumbers.push(
+                    <button
+                      key={totalPages}
+                      onClick={() => handlePageChange(totalPages)}
+                      className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors"
+                    >
+                      {totalPages}
+                    </button>
+                  );
+                }
+
+                return pageNumbers;
+              })()}
+
+              {/* Next Button */}
+              <button
+                onClick={() => handlePageChange(validCurrentPage + 1)}
+                disabled={validCurrentPage === totalPages}
+                className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+              
+              {/* Last Page Button */}
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                disabled={validCurrentPage === totalPages}
+                className="px-3 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Last Page"
+              >
+                »»
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Page Jump */}
+          {totalPages > 10 && (
+            <div className="flex justify-center items-center space-x-2 text-sm">
+              <span className="text-gray-600">Go to page:</span>
+              <input
+                type="number"
+                min="1"
+                max={totalPages}
+                value={validCurrentPage}
+                onChange={(e) => {
+                  const page = parseInt(e.target.value);
+                  if (!isNaN(page) && page >= 1 && page <= totalPages) {
+                    handlePageChange(page);
+                  }
+                }}
+                className="w-16 px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-center"
+              />
+              <span className="text-gray-600">of {totalPages}</span>
+            </div>
+          )}
         </div>
       )}
 
