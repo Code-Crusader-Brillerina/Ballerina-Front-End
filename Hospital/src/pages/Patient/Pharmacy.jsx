@@ -2,8 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { Search, Filter, MapPin, Clock, Truck, Heart, Stethoscope, Book, ChevronDown } from 'lucide-react';
+ 
+// API Client
+const apiClient = axios.create({
+    baseURL: 'http://localhost:8080/patient', // The endpoint is under the /patient service
+    withCredentials: true,
+});
 
-// Enhanced Pharmacy Card Component (No changes needed)
+// Enhanced Pharmacy Card Component
 const PharmacyCard = ({ pharmacy }) => {
     const pharmacyUrl = `/pharmacy/${pharmacy.phId}`;
     return (
@@ -12,9 +18,18 @@ const PharmacyCard = ({ pharmacy }) => {
                 <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-400 to-purple-500 rounded-bl-3xl rounded-tr-3xl opacity-10 group-hover:opacity-20 transition-opacity duration-300"></div>
                 <div className="relative mb-4 flex justify-center">
                     <div className="relative">
-                        <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-all duration-300">
-                            <Stethoscope className="w-12 h-12 text-white" />
-                        </div>
+                        {/* Conditional Rendering for Profile Picture */}
+                        {pharmacy.userDetails && pharmacy.userDetails.profilepic ? (
+                            <img
+                                src={pharmacy.userDetails.profilepic}
+                                alt={`${pharmacy.name}`}
+                                className="w-24 h-24 rounded-2xl object-cover shadow-xl group-hover:shadow-2xl transition-all duration-300"
+                            />
+                        ) : (
+                            <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-all duration-300">
+                                <Stethoscope className="w-12 h-12 text-white" />
+                            </div>
+                        )}
                         <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-green-500 rounded-full border-2 border-white shadow-md" title="Online"></div>
                     </div>
                 </div>
@@ -37,13 +52,12 @@ const PharmacyCard = ({ pharmacy }) => {
     );
 };
 
-// Search and Filter Component (Updated for District and City)
+// Search and Filter Component
 const SearchFilter = ({ searchTerm, setSearchTerm, filters, setFilters, showFilters, setShowFilters, districts, cities }) => {
     
-    // Handler to reset city when district changes
     const handleDistrictChange = (e) => {
         const newDistrict = e.target.value;
-        setFilters({ district: newDistrict, city: 'All' }); // Reset city to 'All'
+        setFilters({ district: newDistrict, city: 'All' });
     };
 
     const handleCityChange = (e) => {
@@ -71,7 +85,6 @@ const SearchFilter = ({ searchTerm, setSearchTerm, filters, setFilters, showFilt
             </div>
             {showFilters && (
                 <div className="mt-6 pt-6 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
-                    {/* District Filter */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">District</label>
                         <select value={filters.district} onChange={handleDistrictChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200">
@@ -80,7 +93,6 @@ const SearchFilter = ({ searchTerm, setSearchTerm, filters, setFilters, showFilt
                             ))}
                         </select>
                     </div>
-                    {/* City Filter */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">City</label>
                         <select value={filters.city} onChange={handleCityChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200">
@@ -95,8 +107,7 @@ const SearchFilter = ({ searchTerm, setSearchTerm, filters, setFilters, showFilt
     );
 };
 
-
-// Quick Stats Component (No changes needed)
+// Quick Stats Component
 const QuickStats = ({ total, fastDelivery, online, onDemand }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-2xl p-6 shadow-lg">
@@ -142,7 +153,7 @@ const QuickStats = ({ total, fastDelivery, online, onDemand }) => (
     </div>
 );
 
-// Pagination Component (No changes needed)
+// Pagination Component
 const Pagination = ({ currentPage, totalPages, onPageChange }) => (
     <div className="flex justify-center items-center space-x-4 mt-8">
         <button onClick={() => onPageChange(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="px-4 py-2 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
@@ -167,33 +178,25 @@ const Pharmacy = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    
-    // Updated filter state
     const [filters, setFilters] = useState({ district: 'All', city: 'All' });
-    
-    // State for dropdown options
     const [districts, setDistricts] = useState(['All']);
     const [availableCities, setAvailableCities] = useState(['All']);
-
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [quickStats, setQuickStats] = useState({ total: '0', fastDelivery: '30+', online: '0', onDemand: '24/7'});
 
-    // Effect for fetching initial data
     useEffect(() => {
         const fetchPharmacies = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:8080/patient/getAllPharmacis', { withCredentials: true });
+                const response = await apiClient.get('/getAllPharmacis');
                 if (response.data && response.data.success) {
                     const fetchedPharmacies = response.data.data;
                     setPharmacies(fetchedPharmacies);
 
-                    // Set unique districts
                     const uniqueDistricts = ['All', ...new Set(fetchedPharmacies.map(p => p.userDetails.district))];
                     setDistricts(uniqueDistricts);
                     
-                    // Set all unique cities initially
                     const uniqueCities = ['All', ...new Set(fetchedPharmacies.map(p => p.userDetails.city))];
                     setAvailableCities(uniqueCities);
 
@@ -220,23 +223,19 @@ const Pharmacy = () => {
         fetchPharmacies();
     }, []);
 
-    // Effect for handling dependent dropdowns
     useEffect(() => {
         if (filters.district === 'All') {
-            // If 'All' districts, show all cities
             const allCities = ['All', ...new Set(pharmacies.map(p => p.userDetails.city))];
             setAvailableCities(allCities);
         } else {
-            // Filter cities based on the selected district
             const citiesInDistrict = ['All', ...new Set(pharmacies
                 .filter(p => p.userDetails.district === filters.district)
                 .map(p => p.userDetails.city)
             )];
             setAvailableCities(citiesInDistrict);
         }
-    }, [filters.district, pharmacies]); // Re-run when district or the main pharmacy list changes
+    }, [filters.district, pharmacies]);
 
-    // Updated filtering logic
     const filteredPharmacies = pharmacies.filter(pharmacy => {
         const matchesSearch = searchTerm === '' ||
             pharmacy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
