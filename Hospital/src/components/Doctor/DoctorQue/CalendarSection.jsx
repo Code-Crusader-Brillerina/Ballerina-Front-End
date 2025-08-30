@@ -3,7 +3,13 @@ import { FaCalendarAlt } from "react-icons/fa";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
-const CalendarSection = ({ date, setDate }) => {
+const CalendarSection = ({ date, setDate, formatDate }) => {
+  // Handle date selection from react-calendar
+  const handleDateChange = (selectedDate) => {
+    const formatted = formatDate(new Date(selectedDate));
+    setDate(formatted); // update state in parent
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-xl p-5 lg:col-span-2">
       <div className="flex items-center justify-between mb-4">
@@ -21,8 +27,8 @@ const CalendarSection = ({ date, setDate }) => {
         </div>
       </div>
       <Calendar
-        onChange={setDate}
-        value={date}
+        onChange={handleDateChange}
+        value={new Date(date)} // Calendar needs a Date object, not a string
         className="rounded-xl border-teal-200 overflow-hidden"
       />
     </div>
