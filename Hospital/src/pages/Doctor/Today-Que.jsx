@@ -7,7 +7,6 @@ import PatientCard from "../../components/Doctor/DoctorQue/PatientCard";
 
 
 const TodayQue = () => {
-  const [date, setDate] = useState(new Date());
   const [activeFilter, setActiveFilter] = useState("all");
   const [patients, setPatients] = useState([]);
   const [singlePatient, setSinglePatient] = useState(null);
@@ -25,6 +24,9 @@ const TodayQue = () => {
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
+
+  const [date, setDate] = useState(formatDate(new Date()));
+
 
   // Helper function to determine current time slot
   const getCurrentTimeSlot = () => {
@@ -138,9 +140,7 @@ const TodayQue = () => {
     const fetchPatients = async () => {
       try {
         setLoading(true);
-        const formattedDate = formatDate(date);
-        console.log(formattedDate);
-        const timeSlot = getCurrentTimeSlot(); // Get current time slot
+        setDate(date);
 
         const response = await fetch("http://localhost:8080/doctor/getQueue", {
           method: "POST",
@@ -148,8 +148,8 @@ const TodayQue = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            date: "2025-08-29",
-            time: "morning", // Use dynamic time slot
+            date: date,
+            time: currentTimeSlot, // Use dynamic time slot
           }),
           credentials: "include",
         });
@@ -296,7 +296,7 @@ const TodayQue = () => {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <CalendarSection date={date} setDate={setDate} />
+        <CalendarSection date={date} setDate={setDate} formatDate={formatDate}/>
         <StatsSection
           totalPatients={Array.isArray(patients) ? patients.length : 0}
           completed={
@@ -309,7 +309,7 @@ const TodayQue = () => {
 
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-teal-900 mb-4">
-          Today's Queue -{" "}
+          {date} Queue -{" "}
           {currentTimeSlot.charAt(0).toUpperCase() + currentTimeSlot.slice(1)}{" "}
           Session
         </h2>
