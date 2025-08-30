@@ -1,689 +1,320 @@
-import React, { useState, useEffect } from "react";
-import { FaUserInjured, FaUserCheck, FaUserClock } from "react-icons/fa";
-import ChartCard from "../../components/Doctor/DoctorDashboard/ChartCard";
-import MetricCard from "../../components/Doctor/DoctorDashboard/MetricCard";
+import React, { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { Line } from "react-chartjs-2";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
+  Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend
 } from "chart.js";
-import { useNavigate } from "react-router-dom";
+import { 
+  Users, 
+  UserCheck, 
+  Clock,
+  DollarSign,
+  TrendingUp,
+  MoreVertical,
+  Activity,
+  ArrowUp,
+  ArrowDown,
+  Eye
+} from 'lucide-react';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
+// Register Chart.js components
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+
+// API Client for Doctor routes
+const apiClient = axios.create({
+  baseURL: 'http://localhost:8080/doctor',
+  withCredentials: true,
+});
+
+// ===================================================================================
+//  REUSABLE COMPONENTS (Styled like PharmacyDashboard)
+// ===================================================================================
+
+const MetricCard = ({ icon: Icon, title, value, percentage, color, trends }) => {
+  const isPositive = percentage >= 0;
+  const textColorClass = isPositive ? 'text-green-600' : 'text-red-600';
+  const bgColorClass = isPositive ? 'bg-green-100' : 'bg-red-100';
+  const iconBgClass = `bg-${color}-100`;
+  const iconColorClass = `text-${color}-600`;
+  
+  const maxValue = trends && trends.length > 0 ? Math.max(...trends, 1) : 1;
+  
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <p className="text-sm font-medium text-gray-500">{title}</p>
+          <h3 className="text-3xl font-bold text-gray-800 mt-1">{value}</h3>
+          {percentage !== null && (
+            <div className="flex items-center mt-3">
+              <span className={`text-xs font-medium px-2 py-1 rounded-full ${bgColorClass} ${textColorClass} flex items-center`}>
+                {isPositive ? <ArrowUp size={10} className="mr-1" /> : <ArrowDown size={10} className="mr-1" />}
+                {Math.abs(percentage)}%
+              </span>
+              <span className="text-xs text-gray-500 ml-2">vs last week</span>
+            </div>
+          )}
+        </div>
+        <div className={`p-3 rounded-lg ${iconBgClass} ${iconColorClass}`}>
+          <Icon size={24} />
+        </div>
+      </div>
+      
+      {trends && trends.length > 0 && (
+        <div className="mt-6">
+          <div className="h-[50px] flex items-end space-x-1">
+            {trends.map((value, index) => (
+              <div 
+                key={index}
+                className={`flex-1 bg-gradient-to-t from-${color}-500 to-${color}-400 rounded-t transition-all duration-300 hover:opacity-80`}
+                style={{ height: `${Math.max(10, (value / maxValue) * 100)}%` }}
+              ></div>
+            ))}
+          </div>
+          <div className="flex justify-between mt-2 text-xs text-gray-400">
+            <span>7d ago</span>
+            <span>Today</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const LineChartCard = ({ chartData, title }) => (
+  <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+      <button className="text-gray-400 hover:text-gray-600">
+        <MoreVertical size={18} />
+      </button>
+    </div>
+    <div className="h-64">
+      <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
+    </div>
+  </div>
 );
 
+// ===================================================================================
+//  MAIN DASHBOARD COMPONENT
+// ===================================================================================
 const DoctorDashboard = () => {
   const navigate = useNavigate();
 
-  // State for API data
-  const [appointments, setAppointments] = useState([]);
-  const [queueData, setQueueData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [queueLoading, setQueueLoading] = useState(true);
+  const [stats, setStats] = useState({ patientsToday: 0, patientsThisWeek: 0, queueCount: 0 });
+  const [revenue, setRevenue] = useState({ completed: 0, pending: 0 });
+  const [queueList, setQueueList] = useState([]);
+  const [dailyTrends, setDailyTrends] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [queueError, setQueueError] = useState(null);
-  const [authError, setAuthError] = useState(false);
 
-  // State for dashboard metrics
-  const [dashboardData, setDashboardData] = useState({
-    totalPatientsThisWeek: 0,
-    patientsToday: 0,
-    patientsInQueue: 0,
-    dailyPatients: [0, 0, 0, 0, 0, 0, 0],
-    dailyLabels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    todaysQueue: [],
-  });
+  const getTodayDate = () => new Date().toISOString().split("T")[0];
+  const getCurrentTimeSlot = () => new Date().getHours() < 12 ? "morning" : "evening";
 
-  // Function to get today's date in YYYY-MM-DD format
-  const getTodayDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  };
-
-  // Function to get current time slot
-  const getCurrentTimeSlot = () => {
-    const now = new Date();
-    const hour = now.getHours();
-    
-    // You can adjust these time ranges based on your clinic's schedule
-    if (hour >= 3 && hour < 12) {
-      return "morning";
-    } else {
-      return "evening";
-    }
-  };
-
-  // Function to get day name
-  const getDayName = (date) => {
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    return days[date.getDay()];
-  };
-
-  // Function to format date for display
-  const formatDateOfBirth = (dobString) => {
-    if (!dobString) return "N/A";
-    
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      const date = new Date(dobString);
-      if (isNaN(date.getTime())) return "N/A";
-      
-      // Format as MM/DD/YYYY or DD/MM/YYYY based on your preference
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-    } catch {
-      return "N/A";
-    }
-  };
+      const queuePayload = { date: getTodayDate(), time: getCurrentTimeSlot() };
 
-  // Function to calculate age from DOB
-  const calculateAge = (dobString) => {
-    if (!dobString) return "N/A";
-    
-    try {
-      const dob = new Date(dobString);
-      if (isNaN(dob.getTime())) return "N/A";
-      
+      const [appointmentsRes, queueRes, completedRes, pendingRes] = await Promise.all([
+        apiClient.get('/getAllAppoinments'),
+        apiClient.post('/getQueue', queuePayload),
+        apiClient.get('/financials/completed'),
+        apiClient.get('/financials/pending'),
+      ]);
+
+      // Process Appointments & Trends
+      const appointments = appointmentsRes.data.data || [];
       const today = new Date();
-      let age = today.getFullYear() - dob.getFullYear();
-      const monthDiff = today.getMonth() - dob.getMonth();
+      const oneWeekAgo = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000);
+      oneWeekAgo.setHours(0, 0, 0, 0);
+
+      const thisWeekAppointments = appointments.filter(app => new Date(app.date) >= oneWeekAgo);
+      const patientsToday = appointments.filter(app => new Date(app.date).toDateString() === today.toDateString()).length;
       
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-        age--;
-      }
-      
-      return age.toString();
-    } catch {
-      return "N/A";
-    }
-  };
+      const trends = Array(7).fill(0).map((_, i) => {
+        const date = new Date(today.getTime() - (6 - i) * 24 * 60 * 60 * 1000);
+        return appointments.filter(app => new Date(app.date).toDateString() === date.toDateString()).length;
+      });
+      setDailyTrends(trends);
 
-  // Function to get auth headers
-  const getAuthHeaders = () => {
-    const token =
-      localStorage.getItem("authToken") ||
-      localStorage.getItem("token") ||
-      localStorage.getItem("accessToken") ||
-      sessionStorage.getItem("authToken") ||
-      sessionStorage.getItem("token");
-
-    const headers = { "Content-Type": "application/json" };
-
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    return headers;
-  };
-
-  // Fetch appointments data
-  const fetchAppointments = async () => {
-    try {
-      setLoading(true);
-
-      const headers = getAuthHeaders();
-      console.log("Making appointments request with headers:", headers);
-
-      const response = await fetch(
-        "http://localhost:8080/doctor/getAllAppoinments",
-        {
-          method: "GET",
-          headers: headers,
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          setAuthError(true);
-          throw new Error(
-            "Authentication required. Please check your login credentials."
-          );
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Received appointments data:", data);
-      setAppointments(data);
-      processAppointmentData(data);
-      setError(null);
-      setAuthError(false);
-    } catch (err) {
-      console.error("Error fetching appointments:", err);
-      setError(err.message);
-
-      // Fallback data for appointments with correct day alignment
-      const fallbackData = generateFallbackWeekData();
-      setDashboardData(prev => ({
-        ...prev,
-        totalPatientsThisWeek: 122,
-        patientsToday: 18,
-        dailyPatients: fallbackData.dailyPatients,
-        dailyLabels: fallbackData.dailyLabels,
-      }));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Generate fallback data with correct day alignment
-  const generateFallbackWeekData = () => {
-    const today = new Date();
-    const dailyLabels = [];
-    const dailyPatients = [];
-    
-    // Generate last 7 days including today
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
-      dailyLabels.push(getDayName(date));
-      // Generate some sample data
-      dailyPatients.push(Math.floor(Math.random() * 20) + 10);
-    }
-    
-    return { dailyLabels, dailyPatients };
-  };
-
-  // Fetch queue data
-  const fetchQueueData = async () => {
-    try {
-      setQueueLoading(true);
-
-      const headers = getAuthHeaders();
-      console.log("Making queue request with headers:", headers);
-
-      const response = await fetch("http://localhost:8080/doctor/getQueue", {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify({ 
-          date: getTodayDate(),
-          time: getCurrentTimeSlot()
-        }),
-        credentials: "include",
+      setStats({
+        patientsToday,
+        patientsThisWeek: thisWeekAppointments.length,
+        queueCount: (queueRes.data.data || []).length,
       });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          setAuthError(true);
-          throw new Error(
-            "Authentication required for queue data. Please check your login credentials."
-          );
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      // Process Revenue
+      setRevenue({
+        completed: completedRes.data.data?.grandTotal || 0,
+        pending: pendingRes.data.data?.grandTotal || 0,
+      });
 
-      const data = await response.json();
-      console.log("Received queue data:", data);
-      setQueueData(data);
-      processQueueData(data);
-      setQueueError(null);
+      // Process Queue List for Table
+      const queueData = (queueRes.data.data || []).map(item => ({
+        id: item.appointment?.aid || item.patient?.pid,
+        name: item.user?.username || 'N/A',
+        time: item.appointment?.time,
+        status: item.appointment?.status,
+        number: item.appointment?.number,
+      })).sort((a, b) => a.number - b.number);
+      setQueueList(queueData);
+
     } catch (err) {
-      console.error("Error fetching queue data:", err);
-      setQueueError(err.message);
-
-      // Fallback queue data for demonstration
-      const fallbackQueue = [
-        {
-          id: 1,
-          patientName: "John Doe",
-          dateOfBirth: "1990-05-15",
-          gender: "Male",
-          appointmentTime: "09:00 AM"
-        }
-      ];
-      
-      setDashboardData(prev => ({
-        ...prev,
-        patientsInQueue: fallbackQueue.length,
-        todaysQueue: fallbackQueue.map((patient, index) => {
-          const colors = ["blue", "green", "red", "yellow", "purple", "orange"];
-          return {
-            id: patient.id,
-            name: patient.patientName,
-            dob: formatDateOfBirth(patient.dateOfBirth),
-            age: calculateAge(patient.dateOfBirth),
-            gender: patient.gender,
-            color: colors[index % colors.length],
-            time: patient.appointmentTime,
-          };
-        }),
-      }));
+      setError("Failed to load dashboard data. Please check connection and try again.");
+      console.error(err);
     } finally {
-      setQueueLoading(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAppointments();
-    fetchQueueData();
+    fetchData();
   }, []);
 
-  const processAppointmentData = (data) => {
-    console.log("Processing appointment data:", data);
-
-    let appointmentsData;
-
-    if (Array.isArray(data)) {
-      appointmentsData = data;
-    } else if (data && Array.isArray(data.appointments)) {
-      appointmentsData = data.appointments;
-    } else if (data && Array.isArray(data.data)) {
-      appointmentsData = data.data;
-    } else if (data && Array.isArray(data.results)) {
-      appointmentsData = data.results;
-    } else {
-      console.warn("Unexpected appointment data structure:", data);
-      appointmentsData = [];
-    }
-
-    if (!Array.isArray(appointmentsData) || appointmentsData.length === 0) {
-      const fallbackData = generateFallbackWeekData();
-      setDashboardData(prev => ({
-        ...prev,
-        totalPatientsThisWeek: 0,
-        patientsToday: 0,
-        dailyPatients: fallbackData.dailyPatients,
-        dailyLabels: fallbackData.dailyLabels,
-      }));
-      return;
-    }
-
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const oneWeekAgo = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000);
-
-    const todayAppointments = appointmentsData.filter((appointment) => {
-      const dateString =
-        appointment.appointmentDate ||
-        appointment.date ||
-        appointment.appointmentDateTime ||
-        appointment.createdAt ||
-        appointment.scheduled_date;
-
-      if (!dateString) return false;
-
-      try {
-        const appointmentDate = new Date(dateString);
-        return appointmentDate.toDateString() === today.toDateString();
-      } catch {
-        return false;
-      }
+  const dailyPatientsChartData = useMemo(() => {
+    const labels = Array(7).fill(0).map((_, i) => {
+      const date = new Date(new Date().getTime() - (6 - i) * 24 * 60 * 60 * 1000);
+      return date.toLocaleDateString('en-US', { weekday: 'short' });
     });
-
-    const thisWeekAppointments = appointmentsData.filter((appointment) => {
-      const dateString =
-        appointment.appointmentDate ||
-        appointment.date ||
-        appointment.appointmentDateTime ||
-        appointment.createdAt ||
-        appointment.scheduled_date;
-
-      if (!dateString) return false;
-
-      try {
-        const appointmentDate = new Date(dateString);
-        return appointmentDate >= oneWeekAgo && appointmentDate <= now;
-      } catch {
-        return false;
-      }
-    });
-
-    // Create arrays for the last 7 days including today
-    const dailyPatients = [];
-    const dailyLabels = [];
-    
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
-      dailyLabels.push(getDayName(date));
-      
-      const dayAppointments = appointmentsData.filter((appointment) => {
-        const dateString =
-          appointment.appointmentDate ||
-          appointment.date ||
-          appointment.appointmentDateTime ||
-          appointment.createdAt ||
-          appointment.scheduled_date;
-
-        if (!dateString) return false;
-
-        try {
-          const appointmentDate = new Date(dateString);
-          return appointmentDate.toDateString() === date.toDateString();
-        } catch {
-          return false;
-        }
-      });
-      dailyPatients.push(dayAppointments.length);
-    }
-
-    setDashboardData(prev => ({
-      ...prev,
-      totalPatientsThisWeek: thisWeekAppointments.length,
-      patientsToday: todayAppointments.length,
-      dailyPatients,
-      dailyLabels,
-    }));
-  };
-
-  const processQueueData = (data) => {
-    console.log("Processing queue data:", data);
-
-    let queueArray;
-
-    // Handle different possible data structures
-    if (Array.isArray(data)) {
-      queueArray = data;
-    } else if (data && Array.isArray(data.queue)) {
-      queueArray = data.queue;
-    } else if (data && Array.isArray(data.data)) {
-      queueArray = data.data;
-    } else if (data && Array.isArray(data.patients)) {
-      queueArray = data.patients;
-    } else if (data && Array.isArray(data.results)) {
-      queueArray = data.results;
-    } else {
-      console.warn("Unexpected queue data structure:", data);
-      queueArray = [];
-    }
-
-    if (!Array.isArray(queueArray)) {
-      queueArray = [];
-    }
-
-    const todaysQueue = queueArray.slice(0, 6).map((item, index) => {
-      const colors = ["blue", "green", "red", "yellow", "purple", "orange"];
-      
-      // Extract data from nested structure
-      const appointment = item.appointment || {};
-      const patient = item.patient || {};
-      const user = item.user || {};
-      
-      // Handle DOB - your API uses "DOB" in patient object with format "YYYY.MM.DD"
-      const dobString = patient.DOB || 
-                       patient.dateOfBirth || 
-                       patient.dob || 
-                       patient.birth_date || 
-                       patient.birthDate ||
-                       patient.patient_dob ||
-                       patient.date_of_birth;
-
-      // Convert DOB format from "YYYY.MM.DD" to standard date format
-      const formatDobForCalculation = (dob) => {
-        if (!dob) return null;
-        if (dob.includes('.')) {
-          return dob.replace(/\./g, '-'); // Convert "2003.05.19" to "2003-05-19"
-        }
-        return dob;
-      };
-
-      const standardDob = formatDobForCalculation(dobString);
-
-      // Extract name - prioritize user.username, then create fallback
-      const patientName = user.username || 
-                         patient.patientName ||
-                         patient.name ||
-                         patient.patient_name ||
-                         (patient.firstName ? `${patient.firstName} ${patient.lastName || ''}`.trim() : '') ||
-                         `Patient ${index + 1}`;
-
-      // Calculate age from DOB
-      const calculatedAge = standardDob ? calculateAge(standardDob) : (patient.age || patient.patient_age || "N/A");
-
-      // Extract appointment time and format it
-      const appointmentTime = appointment.time || 
-                             patient.appointmentTime ||
-                             patient.time ||
-                             patient.scheduled_time ||
-                             patient.queueTime ||
-                             "N/A";
-
-      // Format time for display
-      const formatTime = (timeStr) => {
-        if (!timeStr || timeStr === "N/A") return "N/A";
-        if (timeStr === "morning") return "Morning Session";
-        if (timeStr === "evening") return "Evening Session";
-        return timeStr;
-      };
-
-      return {
-        id: appointment.aid || patient.pid || user.uid || index + 1,
-        name: patientName,
-        dob: formatDateOfBirth(standardDob),
-        age: calculatedAge,
-        gender: patient.gender || patient.sex || "N/A",
-        color: colors[index % colors.length],
-        time: formatTime(appointmentTime),
-        appointmentNumber: appointment.number || index + 1,
-        status: appointment.status || "pending",
-        email: user.email || "N/A",
-        phone: user.phoneNumber || "N/A",
-      };
-    });
-
-    console.log("Processed queue data:", todaysQueue);
-
-    setDashboardData(prev => ({
-      ...prev,
-      patientsInQueue: queueArray.length,
-      todaysQueue,
-    }));
-  };
-
-  const dailyPatientsData = {
-    labels: dashboardData.dailyLabels,
-    datasets: [
-      {
-        label: "Patients This Week",
-        data: dashboardData.dailyPatients,
-        borderColor: "rgb(75, 192, 192)",
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
+    return {
+      labels,
+      datasets: [{
+        label: "Patients per Day",
+        data: dailyTrends,
+        borderColor: "rgb(59, 130, 246)",
+        backgroundColor: "rgba(59, 130, 246, 0.1)",
+        fill: true,
         tension: 0.4,
-      },
-    ],
-  };
+      }],
+    };
+  }, [dailyTrends]);
 
-  if (loading && queueLoading) {
-    return (
-      <div className="space-y-8 p-4">
-        <h1 className="text-3xl font-bold text-gray-800">Doctor Dashboard</h1>
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg text-gray-600">Loading dashboard data...</div>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="p-8 text-center">Loading Dashboard...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
   return (
-    <div className="space-y-8 p-4">
-      <h1 className="text-3xl font-bold text-gray-800">Doctor Dashboard</h1>
-
-      {/* Error messages */}
-      {(error || queueError) && (
-        <div className="space-y-2">
-          {error && (
-            <div
-              className={`border px-4 py-3 rounded ${
-                authError
-                  ? "bg-yellow-100 border-yellow-400 text-yellow-700"
-                  : "bg-red-100 border-red-400 text-red-700"
-              }`}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <strong>
-                    {authError ? "Authentication Required (Appointments):" : "Warning (Appointments):"}
-                  </strong>
-                  {authError ? (
-                    <div>
-                      <p>Unable to authenticate with the server. Please:</p>
-                      <ul className="list-disc list-inside mt-2 text-sm">
-                        <li>Check if you're logged in</li>
-                        <li>Verify your authentication token</li>
-                        <li>Contact your system administrator if the problem persists</li>
-                      </ul>
-                    </div>
-                  ) : (
-                    <>
-                      Could not fetch live appointment data. Showing sample data.
-                      <br />
-                      <small>Error: {error}</small>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {queueError && (
-            <div className="bg-orange-100 border-orange-400 text-orange-700 border px-4 py-3 rounded">
-              <div className="flex justify-between items-start">
-                <div>
-                  <strong>Warning (Queue Data):</strong>
-                  Could not fetch live queue data. Showing sample data.
-                  <br />
-                  <small>Error: {queueError}</small>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <MetricCard
-          icon={FaUserInjured}
-          title="Total Patients This Week"
-          value={dashboardData.totalPatientsThisWeek.toString()}
-          percentage={error ? "+8% from last week" : ""}
-          color="green"
-          onClick={() => window.location.assign("/patients/this-week")}
-        />
-        <MetricCard
-          icon={FaUserCheck}
-          title="Patients Today"
-          value={dashboardData.patientsToday.toString()}
-          percentage={error ? "+5% from yesterday" : ""}
-          color="blue"
-          onClick={() => window.location.assign("/patients/today")}
-        />
-        <MetricCard
-          icon={FaUserClock}
-          title="Patients in Queue"
-          value={dashboardData.patientsInQueue.toString()}
-          percentage=""
-          color="red"
-          onClick={() => window.location.assign("/patients/queue")}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ChartCard
-          title="Daily Patients This Week"
-          value={dashboardData.totalPatientsThisWeek.toString()}
-          percentage={error ? "+8%" : ""}
-          subtitle="Day-by-day trend"
-          color="blue"
-          chart={<Line data={dailyPatientsData} />}
-          navigateTo="/patients/this-week"
-          showMenu={false}
-        />
-      </div>
-
-      <div className="relative mt-8 p-6 border-2 border-gray-300 rounded-lg bg-gray-50">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-gray-700">
-            Today's Queue ({dashboardData.todaysQueue.length} patients)
-            {queueLoading && <span className="text-sm text-gray-500 ml-2">(Loading...)</span>}
-          </h2>
-          <button
-            aria-label="Open queue details"
-            onClick={() => navigate("/doctor/today-que")}
-            className="p-1 rounded hover:bg-gray-200"
-          >
-            <svg
-              className="w-6 h-6 text-gray-600 cursor-pointer"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+      <header className="mb-8">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Doctor's Dashboard</h1>
+            <p className="text-gray-600 mt-2">Welcome back! Here's your real-time overview.</p>
+          </div>
+          <button onClick={fetchData} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+            <Activity size={16} />
+            <span>Refresh</span>
           </button>
         </div>
+      </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dashboardData.todaysQueue.length > 0 ? (
-            dashboardData.todaysQueue.map(
-              ({ id, name, dob, gender, age, color, time, appointmentNumber, status, email, phone }) => (
-                <div key={id} className={`bg-white rounded-lg shadow-md p-4 border-l-4 border-${color}-500 hover:shadow-lg transition-shadow`}>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-lg font-semibold text-gray-800">{name}</h4>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                          status === 'completed' ? 'bg-green-100 text-green-800' : 
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          #{appointmentNumber}
-                        </span>
-                      </div>
-                      <div className="space-y-1 text-sm text-gray-600">
-                        <div className="flex justify-between">
-                          <span className="font-medium">DOB:</span>
-                          <span>{dob}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium">Age:</span>
-                          <span>{age}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium">Gender:</span>
-                          <span className="capitalize">{gender}</span>
-                        </div>
-                        {time && time !== "N/A" && (
-                          <div className="flex justify-between">
-                            <span className="font-medium">Session:</span>
-                            <span className="text-blue-600 font-medium">{time}</span>
-                          </div>
-                        )}
-                        {email && email !== "N/A" && (
-                          <div className="flex justify-between">
-                            <span className="font-medium">Email:</span>
-                            <span className="text-xs text-gray-500 truncate" title={email}>{email}</span>
-                          </div>
-                        )}
-                        {phone && phone !== "N/A" && (
-                          <div className="flex justify-between">
-                            <span className="font-medium">Phone:</span>
-                            <span className="text-xs text-gray-500">{phone}</span>
-                          </div>
-                        )}
-                      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <MetricCard 
+          icon={Users} 
+          title="Patients This Week" 
+          value={stats.patientsThisWeek}
+          percentage={15} // Placeholder
+          color="blue"
+          trends={dailyTrends}
+        />
+        <MetricCard 
+          icon={UserCheck} 
+          title="Patients Today" 
+          value={stats.patientsToday} 
+          percentage={-5} // Placeholder
+          color="green"
+        />
+        <MetricCard 
+          icon={Clock} 
+          title="In Queue Now" 
+          value={stats.queueCount} 
+          percentage={null}
+          color="amber"
+        />
+        <MetricCard 
+          icon={DollarSign} 
+          title="Completed Revenue" 
+          value={`$${revenue.completed.toFixed(2)}`}
+          percentage={8} // Placeholder
+          color="purple"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div className="lg:col-span-2">
+            <LineChartCard 
+                chartData={dailyPatientsChartData}
+                title="Weekly Patient Volume"
+            />
+        </div>
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex flex-col">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Financial Summary</h2>
+            <div className="space-y-6">
+                <div className="flex items-center">
+                    <div className="p-3 bg-purple-100 rounded-lg mr-4"><DollarSign className="text-purple-600" /></div>
+                    <div>
+                        <p className="text-gray-500 text-sm">Completed Revenue</p>
+                        <p className="text-2xl font-bold text-gray-800">${revenue.completed.toFixed(2)}</p>
                     </div>
-                  </div>
                 </div>
-              )
-            )
-          ) : (
-            <div className="col-span-3 text-center text-gray-500 py-8">
-              {queueLoading ? "Loading queue data..." : queueError ? "Unable to load queue data" : "No patients in queue today"}
+                 <div className="flex items-center">
+                    <div className="p-3 bg-yellow-100 rounded-lg mr-4"><TrendingUp className="text-yellow-600" /></div>
+                    <div>
+                        <p className="text-gray-500 text-sm">Pending Revenue</p>
+                        <p className="text-2xl font-bold text-gray-800">${revenue.pending.toFixed(2)}</p>
+                    </div>
+                </div>
             </div>
-          )}
+            <button className="mt-auto w-full bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-900 transition-colors text-sm font-semibold">
+                View Detailed Report
+            </button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">Today's Queue</h2>
+            <button onClick={() => navigate('/doctor/today-que')} className="text-sm font-medium text-blue-600 hover:underline">View All</button>
+        </div>
+        <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+                <thead>
+                    <tr className="text-left text-gray-500">
+                        <th className="py-2 px-3 font-medium">#</th>
+                        <th className="py-2 px-3 font-medium">Patient Name</th>
+                        <th className="py-2 px-3 font-medium">Session</th>
+                        <th className="py-2 px-3 font-medium">Status</th>
+                        <th className="py-2 px-3 font-medium text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                    {queueList.length > 0 ? queueList.slice(0, 5).map(p => (
+                        <tr key={p.id} className="hover:bg-gray-50">
+                            <td className="py-3 px-3 font-semibold text-gray-600">{p.number}</td>
+                            <td className="py-3 px-3 font-medium text-gray-800">{p.name}</td>
+                            <td className="py-3 px-3 text-gray-600 capitalize">{p.time}</td>
+                            <td className="py-3 px-3">
+                                <span className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${
+                                    p.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
+                                    p.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                    'bg-yellow-100 text-yellow-700'
+                                }`}>{p.status}</span>
+                            </td>
+                            <td className="py-3 px-3 text-right">
+                                <button className="text-blue-600 hover:text-blue-800 flex items-center justify-end w-full">
+                                    <Eye size={16} className="mr-1" /> View
+                                </button>
+                            </td>
+                        </tr>
+                    )) : (
+                        <tr>
+                            <td colSpan="5" className="text-center py-8 text-gray-500">No patients in the queue right now.</td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
         </div>
       </div>
     </div>
