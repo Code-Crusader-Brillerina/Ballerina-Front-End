@@ -42,20 +42,20 @@ const TodayQue = () => {
   };
 
   // Update current time slot when component mounts and every minute
-  useEffect(() => {
-    const updateTimeSlot = () => {
-      const timeSlot = getCurrentTimeSlot();
-      setCurrentTimeSlot(timeSlot);
-    };
+  // useEffect(() => {
+  //   const updateTimeSlot = () => {
+  //     const timeSlot = getCurrentTimeSlot();
+  //     setCurrentTimeSlot(timeSlot);
+  //   };
 
-    // Update immediately
-    updateTimeSlot();
+  //   // Update immediately
+  //   updateTimeSlot();
 
-    // Update every minute to keep it current
-    const interval = setInterval(updateTimeSlot, 60000);
+  //   // Update every minute to keep it current
+  //   const interval = setInterval(updateTimeSlot, 60000);
 
-    return () => clearInterval(interval);
-  }, []);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   // Helper function to map API status to display status (UPDATED for new structure)
   const mapApiStatusToDisplay = (apiStatus) => {
