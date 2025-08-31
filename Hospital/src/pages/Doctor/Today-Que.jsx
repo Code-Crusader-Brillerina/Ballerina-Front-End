@@ -243,7 +243,7 @@ const TodayQue = () => {
           Doctor Dashboard
         </h1>
         <p className="text-teal-700 mt-2">
-          Welcome, Dr. Perera. You have{" "}
+          Welcome, You have{" "}
           {Array.isArray(patients)
             ? patients.filter((p) => p.status === "waiting").length
             : 0}{" "}
