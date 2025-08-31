@@ -1,12 +1,14 @@
 # 🏥 Hospital Management Frontend
 
-A modern, scalable, and role-based hospital management frontend built with **React 19**, **Vite**, **TailwindCSS**, and **React Router v7**.  
+A modern, scalable, and role-based hospital management frontend built with **React 18**, **Vite**, **TailwindCSS**, and **React Router v7**.  
 This application supports multiple roles: **Patient, Doctor, Pharmacy, and Admin**, with protected routes and dashboards.
 
 ---
 
 ## 🚀 Demo
-
+<!-- Add deployed link or screenshots here -->
+- 🌐 Live Demo: [Coming Soon](#)
+- 📸 Screenshots: Add screenshots in `/assets/screenshots/`
 
 ---
 
@@ -21,8 +23,6 @@ This application supports multiple roles: **Patient, Doctor, Pharmacy, and Admin
 - [📜 Scripts](#-scripts)
 - [🔌 API Integration](#-api-integration)
 - [🏗️ Architecture Overview](#-architecture-overview)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
 - [👥 Team](#-team)
 - [📞 Support](#-support)
 - [🚀 Deployment](#-deployment)
@@ -73,7 +73,7 @@ This application supports multiple roles: **Patient, Doctor, Pharmacy, and Admin
 ## 🛠 Tech Stack
 
 ### ⚛️ Frontend Framework & Core
-- **Framework:** React 19 + Vite 7
+- **Framework:** React 18 + Vite 7
 - **Styling:** TailwindCSS 4
 - **Routing:** React Router DOM v7
 - **Icons:** lucide-react & react-icons
@@ -92,7 +92,7 @@ This application supports multiple roles: **Patient, Doctor, Pharmacy, and Admin
 ### 🔧 Development Tools
 - **Linting:** ESLint 9
 - **Formatting:** Prettier
-- **Type Checking:** React Types
+- **Type Checking:** TypeScript (optional, if enabled)
 
 ---
 
@@ -104,47 +104,33 @@ src
 │   └── react.svg
 │
 ├── components
-│   │
 │   ├── Admin
 │   │   ├── AdminDashboard
 │   │   │   ├── ChartCard.jsx
 │   │   │   └── MetricCard.jsx
-│   │   │
 │   │   ├── AdminDoctor
 │   │   │   └── AddDoctorModal.jsx
-│   │   │
 │   │   ├── AdminMedicine
 │   │   │   └── AddMedicineModal.jsx
-│   │   │
 │   │   ├── AdminNotification
 │   │   │   └── AddNotificationModal.jsx
-│   │   │
 │   │   ├── AdminPharmacy
 │   │   │   └── AddPharmacyModal.jsx
-│   │   │
 │   │   └── AdminSidebar.jsx
 │   │
 │   ├── Doctor
 │   │   ├── DoctorAddPrescription
 │   │   │   └── PrescriptionRow.jsx
-│   │   │
 │   │   ├── DoctorAppointment
 │   │   │   └── AppointmentCard.jsx
-│   │   │
 │   │   ├── DoctorDashboard
 │   │   │   ├── ChartCard.jsx
 │   │   │   └── MetricCard.jsx
-│   │   │
-│   │   ├── DoctorPatientDetails
-│   │   │
 │   │   ├── DoctorQue
 │   │   │   ├── CalendarSection.jsx
 │   │   │   ├── PatientCard.jsx
 │   │   │   ├── PatientFilters.jsx
 │   │   │   └── StatsSection.jsx
-│   │   │
-│   │   ├── DoctorVideoConference
-│   │   │
 │   │   └── DoctorSidebar.jsx
 │   │
 │   ├── Patient
@@ -152,55 +138,23 @@ src
 │   │   │   ├── AboutSection.jsx
 │   │   │   ├── MissionSection.jsx
 │   │   │   └── TeamSection.jsx
-│   │   │
 │   │   ├── dashboardPage
 │   │   │   ├── AppointmentCard.jsx
 │   │   │   ├── AppointmentSection.jsx
-│   │   │   ├── CompletedAppointment.jsx
-│   │   │   ├── DeliveryProgress.jsx
 │   │   │   └── PrescriptionSection.jsx
-│   │   │
-│   │   ├── doctorPage
-│   │   │   ├── DoctorCard.jsx
-│   │   │   └── SearchFilter.jsx
-│   │   │
-│   │   ├── pharmacyPage
-│   │   │   └── PharmacyCard.jsx
-│   │   │
-│   │   ├── prescriptionPage
-│   │   │   ├── PharmacyCard.jsx
-│   │   │   ├── PrescriptionDetails.jsx
-│   │   │   ├── PrescriptionPrintable.jsx
-│   │   │   ├── SelectedPharmaciesSection.jsx
-│   │   │   ├── FeaturesSection.jsx
-│   │   │   ├── Header.jsx
-│   │   │   ├── HeroSection.jsx
-│   │   │   └── Pagination.jsx
+│   │   └── doctorPage
+│   │       ├── DoctorCard.jsx
+│   │       └── SearchFilter.jsx
 │   │
 │   ├── Pharmacy
 │   │   ├── PharmacyDashboard
 │   │   │   └── MedicineStatusCharts.js
-│   │   │
 │   │   ├── PharmacyMedicineStock
-│   │   │   ├── Header.jsx
 │   │   │   ├── MedicineTable.jsx
-│   │   │   ├── PharmacyHeader.jsx
-│   │   │   ├── StatsCards.jsx
 │   │   │   └── StockChart.jsx
-│   │   │
-│   │   ├── PharmacyPrescription
-│   │   │   ├── PrescriptionCard.jsx
-│   │   │   └── PrescriptionStats.jsx
-│   │   │
-│   │   └── PharmacyPrescriptionDetails
+│   │   └── PharmacyPrescription
 │   │       ├── PrescriptionCard.jsx
-│   │       ├── PharmacySidebar.jsx
-│   │       ├── ChatButton.jsx
-│   │       ├── ChatWindow.jsx
-│   │       ├── Footer.jsx
-│   │       ├── GradientBackground.jsx
-│   │       ├── PrivateRoute.jsx
-│   │       └── SidebarLink.jsx
+│   │       └── PrescriptionStats.jsx
 │
 ├── context
 │   └── AuthContext.jsx
@@ -232,22 +186,18 @@ src
 │   ├── Patient
 │   │   ├── AboutUs.jsx
 │   │   ├── Appointment.jsx
-│   │   ├── AppointmentPaymentPage.jsx
 │   │   ├── Dashboard.jsx
 │   │   ├── Doctor.jsx
 │   │   ├── Home.jsx
 │   │   ├── Pharmacy.jsx
-│   │   ├── PharmacyDelivery.jsx
 │   │   ├── PrescriptionPage.jsx
-│   │   ├── PrescriptionPayment.jsx
 │   │   └── VideoConference.jsx
 │   │
 │   └── Pharmacy
 │       ├── PharmacyDashboard.jsx
 │       ├── PharmacyMedicineStock.jsx
 │       ├── PharmacyNotification.jsx
-│       ├── PharmacyPrescription.jsx
-│       └── PharmacyPrescriptionDetails.jsx
+│       └── PharmacyPrescription.jsx
 │
 └── router
     └── Router.jsx
@@ -255,101 +205,118 @@ src
 🚦 Application Routes
 🌍 Public Routes
 
-/login → Login
+    /login → Login
 
-/signup → Signup
+    /signup → Signup
 
-/ → Home
+    / → Home
 
-/about-us → About Us
+    /about-us → About Us
 
 👤 Patient Routes
 
-/dashboard → Dashboard
+    /dashboard → Patient Dashboard
 
-/appointment/:did → Book Appointment
+    /appointment/:did → Book Appointment
 
-/appointment/payment/:aid → Appointment Payment
+    /appointment/payment/:aid → Appointment Payment
 
-/video-conference/:doctorName → Video Consultation
+    /video-conference/:doctorName → Video Consultation
 
-/prescription/:id → Prescription Details
+    /prescription/:id → Prescription Details
 
-/pharmacy/:pharmacyName/delivery → Pharmacy Delivery
+    /pharmacy/:pharmacyName/delivery → Pharmacy Delivery
 
 👨‍💼 Admin Routes
 
-/admin → Dashboard
+    /admin → Dashboard
 
-/admin/patients → Manage Patients
+    /admin/patients → Manage Patients
 
-/admin/doctors → Manage Doctors
+    /admin/doctors → Manage Doctors
 
-/admin/pharmacy → Manage Pharmacies
+    /admin/pharmacy → Manage Pharmacies
 
-/admin/medicine → Medicine Catalog
+    /admin/medicine → Medicine Catalog
 
-/admin/transaction → Transactions
+    /admin/transaction → Transactions
 
-/admin/notifications → Notifications
+    /admin/notifications → Notifications
 
 🩺 Doctor Routes
 
-/doctor → Dashboard
+    /doctor → Dashboard
 
-/doctor/today-que → Today’s Queue
+    /doctor/today-que → Today’s Queue
 
-/doctor/appointments → Appointments
+    /doctor/appointments → Appointments
 
-/doctor/video-conference → Video Consultations
+    /doctor/video-conference → Video Consultations
 
 💊 Pharmacy Routes
 
-/pharmacy → Dashboard
+    /pharmacy → Dashboard
 
-/pharmacy/medicine-stock → Medicine Stock
+    /pharmacy/medicine-stock → Medicine Stock
 
-/pharmacy/prescription → Prescription Handling
+    /pharmacy/prescription → Prescription Handling
 
 📋 Prerequisites
 
-Node.js (16+)
+    Node.js (v18+)
 
-npm (7+) or yarn (1.22+)
+    npm (v7+) or yarn (v1.22+)
 
-Git
+    Git
 
 🚀 Installation
-1. Clone the Repository
-    git clone https://github.com/Code-Crusader-Brillerina/Ballerina-Front-End.git
-    cd Ballerina-Front-End
 
-2. Install Dependencies
+    Clone the Repository
+
+    git clone https://github.com/Code-Crusader-Brillerina/Ballerina-Front-End.git
+    cd Hospital
+
+
+    Install Dependencies
+
     npm install
     # or
     yarn install
 
-3. Start Development Server
+
+    Setup Environment Variables
+    Create .env file:
+
+    VITE_API_BASE=http://localhost:9090
+    VITE_WS_URL=ws://localhost:9090/ws
+    VITE_STRIPE_PUBLIC_KEY=pk_test_xxxxx
+
+
+    Start Development Server
+
     npm run dev
 
 
-Open http://localhost:5173
+    Open http://localhost:5173
 
 📜 Scripts
-    Script	Description
-        npm run - dev	Start development server with hot reload
-        npm run - build	Build the app for production
-        npm run - preview	Preview production build
-        npm run - lint	Run ESLint
-        🔌 API Integration
+    | Script            | Description                              |
+    | ----------------- | ---------------------------------------- |
+    | `npm run dev`     | Start development server with hot reload |
+    | `npm run build`   | Build the app for production             |
+    | `npm run preview` | Preview production build                 |
+    | `npm run lint`    | Run ESLint                               |
 
-    Authentication Service (Port 9094)
 
-    Patient/Doctor/Pharmacy Services (Port 9090)
+API Integration
 
-    Notification Service (Port 9093)
+    Authentication Service: Port 9094
 
-    Dashboard Services (Port 9092)
+    Patient/Doctor/Pharmacy Services: Port 9090
+
+    Notification Service: Port 9093
+
+    Dashboard Services: Port 9092
 
 🏗️ Architecture Overview
 
@@ -363,27 +330,28 @@ Open http://localhost:5173
 
     PDF/Export Utilities
 
-## 👨‍💻 Collaborators  
-
-    Thanks to the amazing team behind this project:  
-
-- **Eshan Senadhi** - [@eshancool123](https://github.com/eshancool123)  
-- **Bihan Siriwardhana** - [@Bihan-Siriwardhana](https://github.com/Bihan-Siriwardhana)  
-- **Ravindu Kavishan** - [@Ravindu-Kavishan](https://github.com/Ravindu-Kavishan) 
-- **Navod Viduranga Gunathilaka** - [@navo1212](https://github.com/navo1212)  
-
 👥 Team
 
-FiveStackDev ✨
-    Core Contributors: To be added
+    FiveStackDev ✨ – Development Team
 
-    📞 Support
+        Eshan Senadhi - @eshancool123
 
-    📧 Email: your-team@email.com
+        Bihan Siriwardhana - @Bihan-Siriwardhana
 
-    🐛 Issues: GitHub Issues
+        Ravindu Kavishan - @Ravindu-Kavishan
+
+        Navod Viduranga Gunathilaka - @navo1212
+
+📞 Support
+
+📚 Documentation: Project Wiki
+
+🐛 Issues: GitHub Issues
 
 <div align="center">
 
 ⭐ Star this repo if you find it helpful! ⭐
 
+Made with ❤️ by FiveStackDev
+
+</div> ```  
