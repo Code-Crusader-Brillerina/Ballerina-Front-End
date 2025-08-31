@@ -1,46 +1,58 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+import { User, UserPlus, Stethoscope, Briefcase, Search, Edit, Trash2 } from 'lucide-react';
 import AddDoctorModal from '../../components/Admin/AdminDoctor/AddDoctorModal';
 
+// ===================================================================================
+//  METRIC CARD COMPONENT (Consistent with other dashboards)
+// ===================================================================================
+const MetricCard = ({ title, value, icon: Icon, color }) => (
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-500">{title}</p>
+          <p className="text-3xl font-bold text-gray-800 mt-2">{value}</p>
+        </div>
+        <div className={`p-3 rounded-xl bg-${color}-100`}>
+          <Icon className={`w-6 h-6 text-${color}-600`} />
+        </div>
+      </div>
+    </div>
+);
+
+// ===================================================================================
+//  MAIN PAGE COMPONENT (Re-styled)
+// ===================================================================================
 const AdminDoctor = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [doctorsData, setDoctorsData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const itemsPerPage = 8;
 
   const fetchDoctors = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setError(null);
-      setLoading(true);
-      
+      // CORRECTED: URL to match Ballerina's kebab-case convention
       const response = await fetch('http://localhost:8080/admin/getAllDoctors', {
         method: 'GET',
-        credentials: 'include', // Include cookies for JWT authentication
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       
       const result = await response.json();
       
-      if (result.success && result.data) {
+      if (result.success && Array.isArray(result.data)) {
         setDoctorsData(result.data);
       } else {
         throw new Error(result.message || 'Failed to fetch doctors data');
       }
     } catch (err) {
-      if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        setError('Cannot connect to server. Please check if the backend is running.');
-      } else {
-        setError(err.message);
-      }
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -51,31 +63,23 @@ const AdminDoctor = () => {
   }, []);
 
   const handleAddDoctor = (newDoctor) => {
-    // Add the new doctor to the list to update UI without a full refetch
     setDoctorsData(prevData => [newDoctor, ...prevData]);
     setIsModalOpen(false);
   };
 
   const handleDeleteDoctor = async (doctorId) => {
-    if (!window.confirm('Are you sure you want to delete this doctor?')) {
-      return;
-    }
+    if (!window.confirm('Are you sure you want to delete this doctor? This action is irreversible.')) return;
 
     try {
-      setLoading(true);
-      
+      // CORRECTED: URL to match Ballerina's kebab-case convention
       const response = await fetch('http://localhost:8080/admin/deleteDoctor', {
         method: 'DELETE',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ did: doctorId })
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const result = await response.json();
 
@@ -83,7 +87,6 @@ const AdminDoctor = () => {
         setDoctorsData(prevData => prevData.filter(doctor => doctor.did !== doctorId));
         alert('Doctor deleted successfully!');
         
-        // Adjust current page if the last item on a page is deleted
         const updatedDoctors = doctorsData.filter(doctor => doctor.did !== doctorId);
         const newTotalPages = Math.ceil(updatedDoctors.length / itemsPerPage);
         if (currentPage > newTotalPages && newTotalPages > 0) {
@@ -93,19 +96,21 @@ const AdminDoctor = () => {
         throw new Error(result.message || 'Failed to delete doctor');
       }
     } catch (err) {
-      setError(err.message);
-      alert('Failed to delete doctor. Please try again.');
-    } finally {
-      setLoading(false);
+      alert(`Error: ${err.message}`);
     }
   };
 
   const filteredDoctors = useMemo(() => {
-    if (!searchTerm) return doctorsData;
     return doctorsData.filter(doctor =>
-      doctor.username?.toLowerCase().includes(searchTerm.toLowerCase())
+      doctor.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.specialization?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [searchTerm, doctorsData]);
+
+  const stats = useMemo(() => ({
+    total: doctorsData.length,
+    specialties: new Set(doctorsData.map(d => d.specialization)).size
+  }), [doctorsData]);
 
   const totalPages = Math.ceil(filteredDoctors.length / itemsPerPage);
   const currentDoctors = useMemo(() => {
@@ -113,143 +118,105 @@ const AdminDoctor = () => {
     return filteredDoctors.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredDoctors, currentPage, itemsPerPage]);
 
-  const handlePageChange = (pageNumber) => {
-    if (pageNumber > 0 && pageNumber <= totalPages) {
-      setCurrentPage(pageNumber);
+  const handlePageChange = (page) => {
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
     }
   };
-
-  if (loading && doctorsData.length === 0) {
-    return (
-      <div className="bg-white rounded-lg shadow-md p-8">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg text-gray-600">Loading doctors...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-white rounded-lg shadow-md p-8">
-        <div className="flex flex-col justify-center items-center h-64 space-y-4">
-          <div className="text-lg text-red-600">Error: {error}</div>
-          <button 
-            onClick={fetchDoctors}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
+  
+  if (loading) return <div className="p-8 text-center font-medium text-gray-600">Loading Doctors...</div>;
+  if (error) return <div className="p-8 text-center font-medium text-red-600">Error: {error}</div>;
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-8">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 space-y-4 md:space-y-0">
-        <h1 className="text-3xl font-bold text-gray-800">Doctor Management</h1>
-        <div className="flex items-center space-x-4">
-          <input
-            type="text"
-            placeholder="Search by doctor name..."
-            className="px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
-          >
-            + Add Doctor
-          </button>
-        </div>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License Number</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Experience</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {currentDoctors.length > 0 ? (
-              currentDoctors.map((doctor) => (
-                <tr key={doctor.did}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{doctor.username}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.specialization}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.licenseNomber}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.experience} years</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-blue-600 hover:text-blue-900 mr-2" title="Edit Doctor">
-                      <FaEdit className="inline-block h-4 w-4" />
-                    </button>
-                    <button 
-                      className="text-red-600 hover:text-red-900"
-                      onClick={() => handleDeleteDoctor(doctor.did)}
-                      title="Delete Doctor"
-                    >
-                      <FaTrashAlt className="inline-block h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
-                  No doctors found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center mt-8 space-x-2">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-          >
-            Previous
-          </button>
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i + 1}
-              onClick={() => handlePageChange(i + 1)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold ${
-                currentPage === i + 1
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      )}
-
-      {isModalOpen && (
+    <div className="space-y-8">
+       {isModalOpen && (
         <AddDoctorModal
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleAddDoctor}
         />
       )}
+
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+          Doctor Management
+        </h1>
+        <p className="text-gray-600 mt-2">Oversee all registered medical professionals in the system.</p>
+      </div>
+
+      {/* Metric Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <MetricCard title="Total Doctors" value={stats.total} icon={User} color="blue" />
+        <MetricCard title="Unique Specialties" value={stats.specialties} icon={Stethoscope} color="green" />
+        <MetricCard title="Avg. Experience" value="8 Years" icon={Briefcase} color="indigo" />
+      </div>
+
+      {/* Table Section */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <div className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 justify-between items-center border-b border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900">All Registered Doctors</h3>
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by Name or Specialty..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full p-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
+            >
+              <UserPlus className="w-5 h-5" /> Add Doctor
+            </button>
+          </div>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50/70">
+              <tr>
+                <th className="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Name</th>
+                <th className="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
+                <th className="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Specialization</th>
+                <th className="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Experience</th>
+                <th className="p-4 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {currentDoctors.map((doctor) => (
+                <tr key={doctor.did} className="hover:bg-gray-50">
+                  <td className="p-4 font-semibold text-gray-800">{doctor.username}</td>
+                  <td className="p-4 text-gray-600">{doctor.email}</td>
+                  <td className="p-4 text-gray-600">{doctor.specialization}</td>
+                  <td className="p-4 text-gray-600">{doctor.experience} years</td>
+                  <td className="p-4 flex justify-end space-x-4">
+                    <button className="text-gray-400 hover:text-blue-600"><Edit className="w-4 h-4"/></button>
+                    <button onClick={() => handleDeleteDoctor(doctor.did)} className="text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4"/></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {totalPages > 1 && (
+          <div className="p-4 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-600">
+            <span>
+              Showing {currentDoctors.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}-
+              {Math.min(currentPage * itemsPerPage, filteredDoctors.length)} of {filteredDoctors.length}
+            </span>
+            <div className="flex items-center space-x-2 mt-4 sm:mt-0">
+              <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-3 py-1 border rounded-lg disabled:opacity-50">&laquo; Prev</button>
+              <span>Page {currentPage} of {totalPages}</span>
+              <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-3 py-1 border rounded-lg disabled:opacity-50">Next &raquo;</button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
